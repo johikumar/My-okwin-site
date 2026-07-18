@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Maxx VIP - Wingo Predictions</title>
+  <title>Maxx VIP - AI Predictions</title>
   <style>
     * {
       box-sizing: border-box;
@@ -13,663 +13,745 @@
 
     html, body {
       height: 100%;
-      background: #0a0c12;
+      width: 100%;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0c12;
       color: #e8ecf1;
-      overflow: hidden;
       -webkit-tap-highlight-color: transparent;
-      touch-action: none;
     }
 
     .container {
       height: 100vh;
       width: 100vw;
-      display: flex;
       position: relative;
-      background: #0b0d12;
+      overflow: hidden;
     }
 
-    /* Hidden iframe for syncing */
-    .sync-frame {
+    /* Background Site */
+    .background-site {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0c12;
+      z-index: 1;
+    }
+
+    .background-site iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Overlay */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px);
+      z-index: 100;
       display: none;
     }
 
-    /* Main Content */
-    .main-content {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      background: linear-gradient(135deg, #0a0c12 0%, #0f1219 100%);
-    }
-
-    /* Header */
-    .header {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .header-logo {
-      width: 36px;
-      height: 36px;
-      background: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      color: #ff6b6b;
-      font-size: 18px;
-    }
-
-    .header-title {
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .header-right {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .logout-btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .logout-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    /* Balance Section */
-    .balance-section {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 20px;
-      margin: 16px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-    }
-
-    .balance-amount {
-      font-size: 32px;
-      font-weight: 800;
-      color: #1a1a1a;
-      margin-bottom: 8px;
-    }
-
-    .balance-label {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .balance-buttons {
-      display: flex;
-      gap: 12px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .btn-withdraw {
-      background: #ff6b6b;
-      color: white;
-    }
-
-    .btn-withdraw:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
-    }
-
-    .btn-deposit {
-      background: #2ecc71;
-      color: white;
-    }
-
-    .btn-deposit:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
-    }
-
-    /* Game Modes */
-    .game-modes {
-      padding: 16px;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      gap: 12px;
-    }
-
-    .game-mode {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .game-mode:hover {
-      background: rgba(255, 107, 107, 0.15);
-      border-color: rgba(255, 107, 107, 0.3);
-    }
-
-    .game-mode.active {
-      background: rgba(255, 107, 107, 0.3);
-      border-color: #ff6b6b;
-      box-shadow: 0 0 20px rgba(255, 107, 107, 0.2);
-    }
-
-    .game-mode-icon {
-      font-size: 24px;
-      margin-bottom: 6px;
-    }
-
-    .game-mode-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #8993a4;
-    }
-
-    /* Prediction Card */
-    .prediction-card {
-      background: rgba(255, 255, 255, 0.95);
-      margin: 16px;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    .prediction-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .prediction-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #1a1a1a;
-    }
-
-    .prediction-status {
-      background: #2ecc71;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .prediction-period {
-      background: rgba(0, 0, 0, 0.05);
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      color: #666;
-      text-align: center;
-      font-family: 'Courier New', monospace;
-    }
-
-    .prediction-timer {
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .timer-label {
-      font-size: 12px;
-      color: #999;
-      margin-bottom: 6px;
-    }
-
-    .timer-display {
-      font-size: 48px;
-      font-weight: 800;
-      color: #1a1a1a;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .prediction-options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .option-btn {
-      padding: 16px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-      color: white;
-    }
-
-    .option-btn.big {
-      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    }
-
-    .option-btn.big:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
-    }
-
-    .option-btn.big.selected {
-      box-shadow: 0 0 30px rgba(52, 152, 219, 0.6);
-      transform: scale(1.08);
-    }
-
-    .option-btn.small {
-      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    }
-
-    .option-btn.small:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
-    }
-
-    .option-btn.small.selected {
-      box-shadow: 0 0 30px rgba(231, 76, 60, 0.6);
-      transform: scale(1.08);
-    }
-
-    /* Color Selection */
-    .color-section {
-      margin-bottom: 16px;
-    }
-
-    .color-label {
-      font-size: 12px;
-      color: #999;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-
-    .color-buttons {
-      display: flex;
-      gap: 8px;
-    }
-
-    .color-btn {
-      flex: 1;
-      padding: 12px;
-      border: 2px solid transparent;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-      color: white;
-    }
-
-    .color-btn.green {
-      background: #2ecc71;
-    }
-
-    .color-btn.green.selected {
-      border-color: #27ae60;
-      box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
-    }
-
-    .color-btn.purple {
-      background: #9b59b6;
-    }
-
-    .color-btn.purple.selected {
-      border-color: #8e44ad;
-      box-shadow: 0 0 20px rgba(155, 89, 182, 0.4);
-    }
-
-    .color-btn.red {
-      background: #e74c3c;
-    }
-
-    .color-btn.red.selected {
-      border-color: #c0392b;
-      box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
-    }
-
-    .number-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .number-btn {
-      aspect-ratio: 1;
-      border: none;
-      border-radius: 50%;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-      background: rgba(0, 0, 0, 0.1);
-      color: #1a1a1a;
-    }
-
-    .number-btn:hover {
-      transform: scale(1.1);
-    }
-
-    .number-btn.selected {
-      box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
-      transform: scale(1.15);
+    .overlay.active {
+      display: block;
     }
 
     /* Auth Modal */
     .auth-modal {
       position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.95);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #1a1f2e 0%, #0f1219 100%);
+      border: 2px solid rgba(255, 107, 107, 0.3);
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 420px;
+      width: 90%;
+      z-index: 1000;
+      box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -40%);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+      }
     }
 
     .auth-modal.hidden {
       display: none;
     }
 
-    .auth-box {
-      background: radial-gradient(circle at 30% 30%, #1e2338, #0f121c);
-      border: 2px solid rgba(255, 107, 107, 0.3);
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 400px;
-      width: 90%;
+    .auth-header {
       text-align: center;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+      margin-bottom: 30px;
     }
 
-    .auth-box h2 {
-      color: #e8ecf1;
-      margin-bottom: 16px;
-      font-size: 24px;
-    }
-
-    .auth-box p {
-      color: #8993a4;
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-
-    .auth-input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 16px;
-      border: 1px solid rgba(255, 107, 107, 0.3);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      color: #e8ecf1;
-      font-size: 14px;
-    }
-
-    .auth-input::placeholder {
-      color: #8993a4;
-    }
-
-    .auth-btn {
-      width: 100%;
-      padding: 12px;
+    .auth-logo {
+      width: 60px;
+      height: 60px;
       background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .auth-btn:hover {
-      transform: scale(1.05);
-    }
-
-    /* Balance Alert */
-    .balance-alert {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.9);
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 9999;
+      font-size: 32px;
+      margin: 0 auto 16px;
+      box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
     }
 
-    .balance-alert.hidden {
-      display: none;
+    .auth-header h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .balance-alert-box {
-      background: radial-gradient(circle at 30% 30%, #1e2338, #0f121c);
-      border: 2px solid rgba(248, 113, 113, 0.3);
-      border-radius: 20px;
-      padding: 30px;
-      max-width: 350px;
-      width: 90%;
+    .auth-header p {
+      font-size: 13px;
+      color: #8993a4;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      color: #8993a4;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      padding: 14px;
+      border: 1px solid rgba(255, 107, 107, 0.2);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #e8ecf1;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: rgba(255, 107, 107, 0.6);
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 20px rgba(255, 107, 107, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: #5a6470;
+    }
+
+    .auth-btn {
+      padding: 14px;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+
+    .auth-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(255, 107, 107, 0.3);
+    }
+
+    .auth-btn:active {
+      transform: translateY(0);
+    }
+
+    .auth-message {
+      font-size: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 8px;
       text-align: center;
     }
 
-    .balance-alert-box .icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-
-    .balance-alert-box h3 {
+    .auth-message.error {
+      background: rgba(248, 113, 113, 0.1);
       color: #f87171;
-      margin-bottom: 12px;
-      font-size: 20px;
+      border: 1px solid rgba(248, 113, 113, 0.3);
     }
 
-    .balance-alert-box p {
-      color: #8993a4;
-      margin-bottom: 12px;
-      line-height: 1.6;
+    .auth-message.success {
+      background: rgba(46, 204, 113, 0.1);
+      color: #2ecc71;
+      border: 1px solid rgba(46, 204, 113, 0.3);
     }
 
-    .balance-alert-amount {
-      font-size: 28px;
-      font-weight: 800;
+    /* Deposit Alert */
+    .deposit-alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #1a1f2e 0%, #0f1219 100%);
+      border: 2px solid rgba(248, 113, 113, 0.4);
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 400px;
+      width: 90%;
+      z-index: 1001;
+      text-align: center;
+      box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .deposit-alert.hidden {
+      display: none;
+    }
+
+    .deposit-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .deposit-alert h3 {
+      font-size: 22px;
+      margin-bottom: 12px;
       color: #fbbf24;
-      margin-bottom: 8px;
     }
 
-    .balance-alert-min {
-      font-size: 12px;
-      color: #5eead4;
-      margin-bottom: 20px;
+    .deposit-alert p {
+      font-size: 14px;
+      color: #8993a4;
+      line-height: 1.6;
+      margin-bottom: 24px;
     }
 
-    .alert-buttons {
+    .deposit-buttons {
       display: flex;
       gap: 12px;
     }
 
-    .alert-btn {
+    .deposit-btn {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-weight: 700;
       cursor: pointer;
       transition: 0.3s;
+      font-size: 13px;
     }
 
-    .alert-btn.close {
+    .deposit-btn.cancel {
       background: rgba(255, 255, 255, 0.1);
       color: #8993a4;
     }
 
-    .alert-btn.deposit {
-      background: linear-gradient(135deg, #fbbf24, #f59e0b);
-      color: #0a0c12;
+    .deposit-btn.cancel:hover {
+      background: rgba(255, 255, 255, 0.15);
     }
 
-    .alert-btn.deposit:hover {
-      transform: scale(1.05);
+    .deposit-btn.go {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: white;
+    }
+
+    .deposit-btn.go:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(46, 204, 113, 0.3);
+    }
+
+    /* Prediction Popup */
+    .prediction-popup {
+      position: fixed;
+      bottom: 40px;
+      right: 40px;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.3s;
+    }
+
+    .prediction-popup.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .popup-circle {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 40px rgba(255, 107, 107, 0.5);
+      animation: pulse 2s infinite;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 40px rgba(255, 107, 107, 0.5);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 60px rgba(255, 107, 107, 0.7);
+        transform: scale(1.05);
+      }
+    }
+
+    .popup-circle:hover {
+      animation: none;
+      box-shadow: 0 0 60px rgba(255, 107, 107, 0.8);
+      transform: scale(1.1);
+    }
+
+    .popup-icon {
+      font-size: 48px;
+      z-index: 2;
+    }
+
+    .popup-ring {
+      position: absolute;
+      inset: -10px;
+      border: 2px solid rgba(255, 107, 107, 0.3);
+      border-radius: 50%;
+      animation: spin 3s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Prediction Modal */
+    .prediction-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #1a1f2e 0%, #0f1219 100%);
+      border: 2px solid rgba(255, 107, 107, 0.3);
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 450px;
+      width: 90%;
+      z-index: 2000;
+      box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .prediction-modal.hidden {
+      display: none;
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .modal-header h2 {
+      font-size: 26px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .modal-header p {
+      font-size: 13px;
+      color: #8993a4;
+    }
+
+    .prediction-options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .prediction-btn {
+      padding: 24px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #e8ecf1;
+      cursor: pointer;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .prediction-btn:hover {
+      border-color: rgba(255, 107, 107, 0.5);
+      background: rgba(255, 107, 107, 0.1);
+      transform: translateX(10px);
+    }
+
+    .prediction-btn.ai {
+      border-color: rgba(52, 152, 219, 0.3);
+    }
+
+    .prediction-btn.ai:hover {
+      border-color: rgba(52, 152, 219, 0.6);
+      background: rgba(52, 152, 219, 0.1);
+    }
+
+    .prediction-btn.vip {
+      border-color: rgba(155, 89, 182, 0.3);
+    }
+
+    .prediction-btn.vip:hover {
+      border-color: rgba(155, 89, 182, 0.6);
+      background: rgba(155, 89, 182, 0.1);
+    }
+
+    .prediction-icon {
+      font-size: 32px;
+    }
+
+    .prediction-text {
+      text-align: left;
+      flex: 1;
+    }
+
+    .prediction-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .prediction-subtitle {
+      font-size: 12px;
+      color: #8993a4;
+    }
+
+    .prediction-arrow {
+      font-size: 20px;
+      color: #8993a4;
+    }
+
+    /* AI Prediction Interface */
+    .ai-prediction {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0a0c12 0%, #1a1f2e 100%);
+      z-index: 3000;
+      display: none;
+      flex-direction: column;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .ai-prediction.active {
+      display: flex;
+    }
+
+    .ai-header {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(52, 152, 219, 0.2);
+    }
+
+    .ai-header h1 {
+      font-size: 20px;
+      color: white;
+    }
+
+    .ai-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      transition: 0.3s;
+    }
+
+    .ai-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .ai-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ai-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(52, 152, 219, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .ai-period {
+      text-align: center;
+      padding: 20px;
+      background: rgba(52, 152, 219, 0.15);
+      border-radius: 16px;
+      border-left: 4px solid #3498db;
+    }
+
+    .ai-period-label {
+      font-size: 12px;
+      color: #8993a4;
+      margin-bottom: 8px;
+    }
+
+    .ai-period-num {
+      font-size: 24px;
+      font-weight: 800;
+      color: #3498db;
+      font-family: 'Courier New', monospace;
+    }
+
+    .ai-timer {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(46, 204, 113, 0.1));
+      border-radius: 16px;
+    }
+
+    .ai-timer-label {
+      font-size: 12px;
+      color: #8993a4;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .ai-timer-display {
+      font-size: 48px;
+      font-weight: 800;
+      color: #2ecc71;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ai-prediction-result {
+      background: rgba(46, 204, 113, 0.15);
+      border: 2px solid rgba(46, 204, 113, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .ai-result-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .ai-result-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2ecc71;
+      margin-bottom: 8px;
+    }
+
+    .ai-result-confidence {
+      font-size: 14px;
+      color: #8993a4;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 107, 107, 0.3);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 107, 107, 0.5);
     }
 
     @media (max-width: 480px) {
-      .auth-box {
+      .auth-modal,
+      .deposit-alert,
+      .prediction-modal {
+        max-width: 95vw;
         padding: 24px;
       }
 
-      .prediction-card {
-        margin: 12px;
-        padding: 16px;
+      .prediction-popup {
+        bottom: 20px;
+        right: 20px;
       }
 
-      .timer-display {
+      .popup-circle {
+        width: 80px;
+        height: 80px;
+      }
+
+      .popup-icon {
         font-size: 36px;
-      }
-
-      .game-modes {
-        grid-template-columns: 1fr 1fr;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Auth Modal -->
-  <div class="auth-modal" id="authModal">
-    <div class="auth-box">
-      <h2>🎮 Maxx VIP</h2>
-      <p>Enter your invitation code to access real-time Wingo predictions</p>
-      <input type="text" class="auth-input" id="inviteCodeInput" placeholder="Enter invitation code">
-      <button class="auth-btn" id="authBtn">Verify & Enter</button>
-    </div>
-  </div>
-
-  <!-- Balance Alert -->
-  <div class="balance-alert hidden" id="balanceAlert">
-    <div class="balance-alert-box">
-      <div class="icon">🔒</div>
-      <h3>Insufficient Balance</h3>
-      <p>Your balance is below the minimum required to access predictions</p>
-      <div class="balance-alert-amount" id="alertBalance">₹0.00</div>
-      <div class="balance-alert-min">Minimum required: ₹500</div>
-      <div class="alert-buttons">
-        <button class="alert-btn close" id="alertCloseBtn">Close</button>
-        <button class="alert-btn deposit" id="alertDepositBtn">💰 Deposit</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hidden iframe for syncing -->
-  <iframe class="sync-frame" id="syncFrame" src="https://okwinslots4.com/#/wingo?invitationCode=283219142680" referrerpolicy="no-referrer"></iframe>
-
-  <!-- Main Content -->
+  <!-- Background Site -->
   <div class="container">
-    <div class="main-content">
-      <!-- Header -->
-      <div class="header">
-        <div class="header-left">
-          <div class="header-logo">M</div>
-          <div class="header-title">MAXX VIP Predictions</div>
-        </div>
-        <div class="header-right">
-          <button class="logout-btn" id="logoutBtn">Logout</button>
-        </div>
+    <div class="background-site">
+      <iframe src="https://okwinslots2.com/#/register?invitationCode=283219142680"></iframe>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal">
+      <div class="auth-header">
+        <div class="auth-logo">💎</div>
+        <h2>Maxx VIP</h2>
+        <p>AI-Powered Predictions</p>
       </div>
-
-      <!-- Balance Section -->
-      <div class="balance-section">
-        <div class="balance-amount" id="balanceAmount">₹0.00</div>
-        <div class="balance-label">💳 Wallet balance</div>
-        <div class="balance-buttons">
-          <button class="btn btn-withdraw">Withdraw</button>
-          <button class="btn btn-deposit">Deposit</button>
+      <div class="auth-form">
+        <div class="form-group">
+          <label class="form-label">Invitation Code</label>
+          <input type="text" class="form-input" id="inviteCodeInput" placeholder="Enter your code">
         </div>
+        <button class="auth-btn" id="authBtn">Verify & Enter</button>
+        <div class="auth-message" id="authMessage"></div>
       </div>
+    </div>
 
-      <!-- Game Modes -->
-      <div class="game-modes">
-        <div class="game-mode active">
-          <div class="game-mode-icon">🎮</div>
-          <div class="game-mode-label">WinGo 30sec</div>
-        </div>
-        <div class="game-mode">
-          <div class="game-mode-icon">⏱️</div>
-          <div class="game-mode-label">WinGo 1Min</div>
-        </div>
-        <div class="game-mode">
-          <div class="game-mode-icon">⏰</div>
-          <div class="game-mode-label">WinGo 3Min</div>
-        </div>
-        <div class="game-mode">
-          <div class="game-mode-icon">🕐</div>
-          <div class="game-mode-label">WinGo 5Min</div>
-        </div>
+    <!-- Deposit Alert -->
+    <div class="deposit-alert hidden" id="depositAlert">
+      <div class="deposit-icon">💰</div>
+      <h3>Deposit Required</h3>
+      <p>Make a deposit to unlock AI predictions and access real-time analysis</p>
+      <div class="deposit-buttons">
+        <button class="deposit-btn cancel" id="depositCancel">Later</button>
+        <button class="deposit-btn go" id="depositGo">Go to Deposit</button>
       </div>
+    </div>
 
-      <!-- Prediction Card -->
-      <div class="prediction-card">
-        <div class="prediction-header">
-          <div class="prediction-title">WinGo 30sec</div>
-          <div class="prediction-status">🟢 LIVE</div>
-        </div>
+    <!-- Prediction Popup -->
+    <div class="prediction-popup" id="predictionPopup">
+      <div class="popup-circle" id="popupCircle">
+        <div class="popup-ring"></div>
+        <div class="popup-icon">💎</div>
+      </div>
+    </div>
 
-        <div class="prediction-period">
-          Period: <span id="periodNumber">20260718000001</span>
-        </div>
+    <!-- Prediction Modal -->
+    <div class="prediction-modal hidden" id="predictionModal">
+      <div class="modal-header">
+        <h2>Choose Prediction Mode</h2>
+        <p>Select how you want to predict</p>
+      </div>
+      <div class="prediction-options">
+        <button class="prediction-btn ai" id="aiPredictionBtn">
+          <div class="prediction-icon">🤖</div>
+          <div class="prediction-text">
+            <div class="prediction-title">AI Prediction</div>
+            <div class="prediction-subtitle">Real-time AI analysis</div>
+          </div>
+          <div class="prediction-arrow">→</div>
+        </button>
+        <button class="prediction-btn vip" id="vipPredictionBtn">
+          <div class="prediction-icon">👑</div>
+          <div class="prediction-text">
+            <div class="prediction-title">VIP Prediction</div>
+            <div class="prediction-subtitle">Expert signals via Telegram</div>
+          </div>
+          <div class="prediction-arrow">→</div>
+        </button>
+      </div>
+    </div>
 
-        <div class="prediction-timer">
-          <div class="timer-label">TIME REMAINING</div>
-          <div class="timer-display" id="timerDisplay">00:30</div>
-        </div>
-
-        <div class="prediction-options">
-          <button class="option-btn big" id="bigBtn">📈 Big</button>
-          <button class="option-btn small" id="smallBtn">📉 Small</button>
-        </div>
-
-        <div class="color-section">
-          <div class="color-label">Choose Color:</div>
-          <div class="color-buttons">
-            <button class="color-btn green" id="greenBtn">Green</button>
-            <button class="color-btn purple" id="purpleBtn">Violet</button>
-            <button class="color-btn red" id="redBtn">Red</button>
+    <!-- AI Prediction Interface -->
+    <div class="ai-prediction" id="aiPrediction">
+      <div class="ai-header">
+        <h1>🤖 AI Prediction Engine</h1>
+        <button class="ai-close" id="aiClose">✕</button>
+      </div>
+      <div class="ai-content">
+        <div class="ai-card">
+          <div class="ai-period">
+            <div class="ai-period-label">Current Period</div>
+            <div class="ai-period-num" id="aiPeriod">20260718000001</div>
           </div>
         </div>
 
-        <div class="color-section">
-          <div class="color-label">Choose Number:</div>
-          <div class="number-grid" id="numberGrid"></div>
+        <div class="ai-card">
+          <div class="ai-timer">
+            <div class="ai-timer-label">Time Remaining</div>
+            <div class="ai-timer-display" id="aiTimer">01:00</div>
+          </div>
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-prediction-result">
+            <div class="ai-result-icon" id="aiResultIcon">📈</div>
+            <div class="ai-result-text" id="aiResultText">BIG</div>
+            <div class="ai-result-confidence">Confidence: <span id="aiConfidence">87</span>%</div>
+          </div>
+        </div>
+
+        <div class="ai-card">
+          <h3 style="color: #e8ecf1; margin-bottom: 12px; font-size: 14px;">📊 Analysis</h3>
+          <p style="font-size: 13px; color: #8993a4; line-height: 1.6;">
+            Current market shows strong upward momentum. Historical patterns indicate <strong style="color: #2ecc71;">BIG</strong> outcome with high probability. Risk level: <span style="color: #f59e0b;">MEDIUM</span>
+          </p>
         </div>
       </div>
     </div>
@@ -679,245 +761,244 @@
   (() => {
     'use strict';
 
+    // Configuration
     const INVITE_CODE = '283219142680';
-    const MIN_BALANCE = 500;
-    const PREDICTION_CYCLE = 60000; // 1 minute in ms
+    const STORAGE_KEY = 'maxx_vip_auth';
+    const DEPOSIT_KEY = 'maxx_vip_deposit';
+    const PREDICTION_CYCLE = 60000; // 1 minute
 
     // DOM Elements
     const authModal = document.getElementById('authModal');
     const inviteCodeInput = document.getElementById('inviteCodeInput');
     const authBtn = document.getElementById('authBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const balanceAlert = document.getElementById('balanceAlert');
-    const alertCloseBtn = document.getElementById('alertCloseBtn');
-    const alertDepositBtn = document.getElementById('alertDepositBtn');
-    const balanceAmount = document.getElementById('balanceAmount');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const periodNumber = document.getElementById('periodNumber');
-    const alertBalance = document.getElementById('alertBalance');
-    const syncFrame = document.getElementById('syncFrame');
+    const authMessage = document.getElementById('authMessage');
+    const overlay = document.getElementById('overlay');
+    const depositAlert = document.getElementById('depositAlert');
+    const depositCancel = document.getElementById('depositCancel');
+    const depositGo = document.getElementById('depositGo');
+    const predictionPopup = document.getElementById('predictionPopup');
+    const popupCircle = document.getElementById('popupCircle');
+    const predictionModal = document.getElementById('predictionModal');
+    const aiPredictionBtn = document.getElementById('aiPredictionBtn');
+    const vipPredictionBtn = document.getElementById('vipPredictionBtn');
+    const aiPrediction = document.getElementById('aiPrediction');
+    const aiClose = document.getElementById('aiClose');
+    const aiTimer = document.getElementById('aiTimer');
+    const aiPeriod = document.getElementById('aiPeriod');
+    const aiResultIcon = document.getElementById('aiResultIcon');
+    const aiResultText = document.getElementById('aiResultText');
+    const aiConfidence = document.getElementById('aiConfidence');
 
-    // Prediction buttons
-    const bigBtn = document.getElementById('bigBtn');
-    const smallBtn = document.getElementById('smallBtn');
-    const greenBtn = document.getElementById('greenBtn');
-    const purpleBtn = document.getElementById('purpleBtn');
-    const redBtn = document.getElementById('redBtn');
-    const numberGrid = document.getElementById('numberGrid');
-
-    // State
-    let isAuthenticated = localStorage.getItem('maxxVipAuth') === 'true';
-    let selectedPrediction = null;
-    let selectedColor = null;
-    let selectedNumber = null;
+    let isAuthenticated = false;
+    let hasDeposit = false;
     let timerInterval = null;
-    let balanceCheckInterval = null;
-    let cycleStartTime = Date.now();
+    let cycleStart = Date.now();
 
-    // Initialize number grid
-    function initNumberGrid() {
-      numberGrid.innerHTML = '';
-      for (let i = 0; i < 10; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'number-btn';
-        btn.textContent = i;
-        btn.addEventListener('click', () => selectNumber(i, btn));
-        numberGrid.appendChild(btn);
-      }
+    // Initialize
+    function init() {
+      checkAuth();
+      setupEventListeners();
+      monitorDeposit();
     }
 
     // Auth Functions
     function checkAuth() {
-      if (!isAuthenticated) {
-        authModal.classList.remove('hidden');
-        inviteCodeInput.focus();
-      } else {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === INVITE_CODE) {
+        isAuthenticated = true;
         authModal.classList.add('hidden');
-        startPredictionSync();
-        startBalanceCheck();
+        overlay.classList.remove('active');
+        checkDeposit();
+      } else {
+        isAuthenticated = false;
+        authModal.classList.remove('hidden');
+        overlay.classList.add('active');
       }
     }
 
     function verifyInviteCode() {
       const code = inviteCodeInput.value.trim();
       if (code === INVITE_CODE) {
+        localStorage.setItem(STORAGE_KEY, INVITE_CODE);
         isAuthenticated = true;
-        localStorage.setItem('maxxVipAuth', 'true');
         authModal.classList.add('hidden');
-        startPredictionSync();
-        startBalanceCheck();
+        overlay.classList.remove('active');
+        authMessage.textContent = '';
+        checkDeposit();
       } else {
-        alert('Invalid invitation code!');
+        showMessage(authMessage, 'Invalid code', 'error');
         inviteCodeInput.value = '';
       }
     }
 
-    function logout() {
-      if (confirm('Are you sure you want to logout?')) {
-        isAuthenticated = false;
-        localStorage.removeItem('maxxVipAuth');
-        clearInterval(timerInterval);
-        clearInterval(balanceCheckInterval);
-        selectedPrediction = null;
-        selectedColor = null;
-        selectedNumber = null;
-        checkAuth();
-      }
+    function showMessage(element, text, type) {
+      element.textContent = text;
+      element.className = `auth-message ${type}`;
     }
 
-    // Sync from iframe
-    function syncFromIframe() {
+    // Deposit Monitoring
+    function monitorDeposit() {
+      const bgFrame = document.querySelector('.background-site iframe');
+      if (!bgFrame || !bgFrame.contentDocument) {
+        setTimeout(monitorDeposit, 1000);
+        return;
+      }
+
       try {
-        if (!syncFrame || !syncFrame.contentDocument) return;
-
-        const iframeDoc = syncFrame.contentDocument;
-
-        // Try to get period number
-        const periodSelectors = [
-          '.period-id', '[data-period]', '.game-period', 
-          '.current-period', '.period-number', 'span[id*="period"]'
-        ];
-
-        for (const selector of periodSelectors) {
-          const el = iframeDoc.querySelector(selector);
-          if (el && el.textContent) {
-            const period = el.textContent.trim();
-            if (/^\d{15,}$/.test(period)) {
-              periodNumber.textContent = period;
-              break;
-            }
-          }
-        }
-
-        // Get balance
+        const doc = bgFrame.contentDocument;
         const balanceSelectors = [
-          '.balance', '.wallet-balance', '.user-balance', '.amount',
-          '[data-balance]', '.wallet-amount', '.credit-amount',
-          '.main-balance', '.available-balance', '.current-balance'
+          '.balance', '.wallet-balance', '.amount',
+          '[data-balance]', '.user-balance', '.current-balance'
         ];
 
-        for (const selector of balanceSelectors) {
-          const elements = iframeDoc.querySelectorAll(selector);
-          for (const el of elements) {
-            const text = el.textContent.trim();
-            const match = text.match(/[₹$€£]?\s*([\d,]+\.?\d*)/);
-            if (match) {
-              const balance = parseFloat(match[1].replace(/,/g, ''));
-              if (!isNaN(balance) && balance > 0) {
-                balanceAmount.textContent = '₹' + balance.toFixed(2);
-                return;
+        const checkBalance = () => {
+          let foundBalance = false;
+          for (const selector of balanceSelectors) {
+            const elements = doc.querySelectorAll(selector);
+            for (const el of elements) {
+              const text = el.textContent.trim();
+              const match = text.match(/[\d,]+\.?\d*/);
+              if (match) {
+                const balance = parseFloat(match[0].replace(/,/g, ''));
+                if (!isNaN(balance) && balance > 0) {
+                  hasDeposit = true;
+                  localStorage.setItem(DEPOSIT_KEY, 'true');
+                  foundBalance = true;
+                  break;
+                }
               }
             }
+            if (foundBalance) break;
           }
-        }
+        };
+
+        checkBalance();
+        setInterval(checkBalance, 3000);
       } catch (e) {
-        console.log('Sync error:', e);
+        console.log('Monitor error:', e);
+        setTimeout(monitorDeposit, 2000);
       }
     }
 
-    // Timer Functions
-    function updateTimer() {
-      const now = Date.now();
-      const elapsed = (now - cycleStartTime) % PREDICTION_CYCLE;
-      const remaining = Math.floor((PREDICTION_CYCLE - elapsed) / 1000);
-      
-      const seconds = remaining % 60;
-      const minutes = Math.floor(remaining / 60);
-      
-      timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    function checkDeposit() {
+      hasDeposit = localStorage.getItem(DEPOSIT_KEY) === 'true';
+      if (!hasDeposit) {
+        depositAlert.classList.remove('hidden');
+        overlay.classList.add('active');
+      }
     }
 
-    function startPredictionSync() {
-      syncFromIframe();
-      updateTimer();
-      
+    // Prediction Functions
+    function showPredictionPopup() {
+      if (isAuthenticated && hasDeposit) {
+        predictionPopup.classList.add('show');
+      }
+    }
+
+    function hidePredictionPopup() {
+      predictionPopup.classList.remove('show');
+    }
+
+    function showPredictionModal() {
+      predictionModal.classList.remove('hidden');
+      overlay.classList.add('active');
+    }
+
+    function hidePredictionModal() {
+      predictionModal.classList.add('hidden');
+      overlay.classList.remove('active');
+    }
+
+    function startAIPrediction() {
+      hidePredictionModal();
+      aiPrediction.classList.add('active');
+      startAITimer();
+      generateAIPrediction();
+    }
+
+    function startAITimer() {
+      cycleStart = Date.now();
       if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        syncFromIframe();
-        updateTimer();
-      }, 100);
-    }
-
-    // Balance Check
-    function getRealBalance() {
-      try {
-        const text = balanceAmount.textContent;
-        const match = text.match(/₹([\d,]+\.?\d*)/);
-        return match ? parseFloat(match[1].replace(/,/g, '')) : 0;
-      } catch {
-        return 0;
-      }
-    }
-
-    function checkBalance() {
-      syncFromIframe();
-      const balance = getRealBalance();
       
-      if (balance < MIN_BALANCE) {
-        alertBalance.textContent = '₹' + balance.toFixed(2);
-        balanceAlert.classList.remove('hidden');
-      }
+      const updateTimer = () => {
+        const elapsed = (Date.now() - cycleStart) % PREDICTION_CYCLE;
+        const remaining = Math.floor((PREDICTION_CYCLE - elapsed) / 1000);
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        aiTimer.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      };
+
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 100);
     }
 
-    function startBalanceCheck() {
-      if (balanceCheckInterval) clearInterval(balanceCheckInterval);
-      balanceCheckInterval = setInterval(checkBalance, 3000);
-      checkBalance();
+    function generateAIPrediction() {
+      const predictions = [
+        { icon: '📈', text: 'BIG', confidence: 87 },
+        { icon: '📉', text: 'SMALL', confidence: 85 },
+        { icon: '🔴', text: 'RED', confidence: 92 },
+        { icon: '🟢', text: 'GREEN', confidence: 88 }
+      ];
+
+      const pred = predictions[Math.floor(Math.random() * predictions.length)];
+      aiResultIcon.textContent = pred.icon;
+      aiResultText.textContent = pred.text;
+      aiConfidence.textContent = pred.confidence;
     }
 
-    // Prediction Selection
-    function selectPrediction(type, btn) {
-      selectedPrediction = type;
-      bigBtn.classList.remove('selected');
-      smallBtn.classList.remove('selected');
-      btn.classList.add('selected');
-    }
-
-    function selectColor(color, btn) {
-      selectedColor = color;
-      greenBtn.classList.remove('selected');
-      purpleBtn.classList.remove('selected');
-      redBtn.classList.remove('selected');
-      btn.classList.add('selected');
-    }
-
-    function selectNumber(num, btn) {
-      selectedNumber = num;
-      document.querySelectorAll('.number-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
+    function goToVIP() {
+      window.location.href = 'https://t.me/Earning_ranger';
     }
 
     // Event Listeners
-    authBtn.addEventListener('click', verifyInviteCode);
-    inviteCodeInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') verifyInviteCode();
-    });
+    function setupEventListeners() {
+      authBtn.addEventListener('click', verifyInviteCode);
+      inviteCodeInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') verifyInviteCode();
+      });
 
-    logoutBtn.addEventListener('click', logout);
-    alertCloseBtn.addEventListener('click', () => balanceAlert.classList.add('hidden'));
-    alertDepositBtn.addEventListener('click', () => {
-      window.location.href = 'https://okwinslots4.com/#/wallet?invitationCode=283219142680';
-    });
+      depositCancel.addEventListener('click', () => {
+        depositAlert.classList.add('hidden');
+        overlay.classList.remove('active');
+      });
 
-    bigBtn.addEventListener('click', () => selectPrediction('big', bigBtn));
-    smallBtn.addEventListener('click', () => selectPrediction('small', smallBtn));
-    greenBtn.addEventListener('click', () => selectColor('green', greenBtn));
-    purpleBtn.addEventListener('click', () => selectColor('purple', purpleBtn));
-    redBtn.addEventListener('click', () => selectColor('red', redBtn));
+      depositGo.addEventListener('click', () => {
+        window.location.href = 'https://okwinslots2.com/#/wallet?invitationCode=283219142680';
+      });
 
-    // Initialize
-    initNumberGrid();
-    checkAuth();
+      popupCircle.addEventListener('click', showPredictionModal);
+
+      aiPredictionBtn.addEventListener('click', startAIPrediction);
+      vipPredictionBtn.addEventListener('click', goToVIP);
+
+      aiClose.addEventListener('click', () => {
+        aiPrediction.classList.remove('active');
+        if (timerInterval) clearInterval(timerInterval);
+        hidePredictionPopup();
+      });
+
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          if (!authModal.classList.contains('hidden')) return;
+          if (!depositAlert.classList.contains('hidden')) return;
+          hidePredictionModal();
+        }
+      });
+    }
+
+    // Start
+    init();
+    showPredictionPopup();
 
     // Expose API
-    window.MAXX_VIP_PREDICTIONS = {
-      getBalance: getRealBalance,
-      getPeriod: () => periodNumber.textContent,
-      getPrediction: () => selectedPrediction,
-      getColor: () => selectedColor,
-      getNumber: () => selectedNumber,
-      logout,
-      version: '3.0'
+    window.MAXX = {
+      isAuth: () => isAuthenticated,
+      hasDeposit: () => hasDeposit,
+      logout: () => {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(DEPOSIT_KEY);
+        location.reload();
+      }
     };
 
   })();
