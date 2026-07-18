@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Maxx VIP - Wingo</title>
+  <title>Maxx VIP - Wingo Predictions</title>
   <style>
-    /* Reset & Base */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
+
     html, body {
       height: 100%;
       background: #0a0c12;
@@ -20,603 +20,656 @@
       -webkit-tap-highlight-color: transparent;
       touch-action: none;
     }
-    .stage {
+
+    .container {
       height: 100vh;
       width: 100vw;
+      display: flex;
       position: relative;
       background: #0b0d12;
     }
 
-    /* Loading Screen */
-    #loadingScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
+    /* Hidden iframe for syncing */
+    .sync-frame {
+      display: none;
+    }
+
+    /* Main Content */
+    .main-content {
       width: 100%;
       height: 100%;
-      background: #0a0c12;
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
+      background: linear-gradient(135deg, #0a0c12 0%, #0f1219 100%);
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-logo {
+      width: 36px;
+      height: 36px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 99999;
-      transition: opacity 0.5s ease;
+      font-weight: 900;
+      color: #ff6b6b;
+      font-size: 18px;
     }
-    #loadingScreen.hidden {
-      opacity: 0;
-      pointer-events: none;
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
     }
-    .loader {
-      width: 50px;
-      height: 50px;
-      border: 3px solid rgba(94, 234, 212, 0.1);
-      border-top: 3px solid #5eead4;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+
+    .header-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
     }
-    .loader-text {
-      margin-top: 16px;
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Balance Section */
+    .balance-section {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      margin: 16px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .balance-amount {
+      font-size: 32px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .balance-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .balance-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
       font-size: 14px;
-      color: #8993a4;
-      letter-spacing: 0.1em;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
     }
 
-    .site-frame {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-      background: #1a1e28;
-      z-index: 1;
+    .btn-withdraw {
+      background: #ff6b6b;
+      color: white;
     }
 
-    /* ---------- MOVABLE PREMIUM POPUP ---------- */
-    .premium-popup {
-      position: fixed;
-      bottom: 30px;
-      left: 30px;
-      width: 100px;
-      height: 100px;
-      background: radial-gradient(circle at 35% 35%, #1e2338, #0f121c);
-      border-radius: 50%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 40px rgba(94, 234, 212, 0.05);
-      border: 2px solid rgba(94, 234, 212, 0.12);
-      user-select: none;
-      -webkit-user-select: none;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: grab;
-      transition: box-shadow 0.3s;
+    .btn-withdraw:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-deposit {
+      background: #2ecc71;
+      color: white;
+    }
+
+    .btn-deposit:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+    }
+
+    /* Game Modes */
+    .game-modes {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .game-mode {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
       padding: 12px;
       text-align: center;
-      touch-action: none;
-      will-change: transform;
+      cursor: pointer;
+      transition: 0.3s;
     }
-    .premium-popup.dragging {
-      cursor: grabbing;
-      box-shadow: 0 25px 70px rgba(0,0,0,0.95);
-      transition: none;
+
+    .game-mode:hover {
+      background: rgba(255, 107, 107, 0.15);
+      border-color: rgba(255, 107, 107, 0.3);
     }
-    .premium-popup:hover {
-      box-shadow: 0 25px 70px rgba(0,0,0,0.95), 0 0 60px rgba(94, 234, 212, 0.08);
-      border-color: rgba(94, 234, 212, 0.2);
+
+    .game-mode.active {
+      background: rgba(255, 107, 107, 0.3);
+      border-color: #ff6b6b;
+      box-shadow: 0 0 20px rgba(255, 107, 107, 0.2);
     }
-    .premium-popup .logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #5eead4, #38bdf8);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 14px;
-      color: #0a0c12;
-      box-shadow: 0 0 30px rgba(94, 234, 212, 0.25);
-      animation: glow 2.5s ease-in-out infinite alternate;
-      margin-bottom: 4px;
-      pointer-events: none;
-      flex-shrink: 0;
+
+    .game-mode-icon {
+      font-size: 24px;
+      margin-bottom: 6px;
     }
-    @keyframes glow {
-      0% { box-shadow: 0 0 15px rgba(94, 234, 212, 0.15); }
-      100% { box-shadow: 0 0 40px rgba(94, 234, 212, 0.4); }
-    }
-    .premium-popup .brand-name {
+
+    .game-mode-label {
       font-size: 11px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #5eead4, #38bdf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 0.06em;
-      line-height: 1.1;
-      pointer-events: none;
-    }
-    .premium-popup .brand-sub {
-      font-size: 6px;
+      font-weight: 600;
       color: #8993a4;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-top: 1px;
-      pointer-events: none;
-    }
-    .premium-popup .click-hint {
-      font-size: 6px;
-      color: #5eead4;
-      opacity: 0.4;
-      margin-top: 3px;
-      animation: pulse-text 2s ease-in-out infinite;
-      pointer-events: none;
-    }
-    @keyframes pulse-text {
-      0%, 100% { opacity: 0.2; }
-      50% { opacity: 0.7; }
     }
 
-    /* ---------- PREDICTION BAR ---------- */
-    .prediction-bar {
-      position: fixed;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10000;
-      background: rgba(18, 21, 31, 0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(94, 234, 212, 0.08);
-      border-radius: 14px;
-      padding: 6px 14px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-      display: none;
-      align-items: center;
-      gap: 12px;
-      user-select: none;
-      -webkit-user-select: none;
-      min-height: 44px;
-      min-width: 160px;
-      cursor: default;
-      will-change: transform;
+    /* Prediction Card */
+    .prediction-card {
+      background: rgba(255, 255, 255, 0.95);
+      margin: 16px;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
     }
 
-    .bar-brand {
+    .prediction-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
+      margin-bottom: 16px;
     }
-    .bar-logo {
-      width: 22px;
-      height: 22px;
-      background: linear-gradient(135deg, #5eead4, #38bdf8);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 10px;
-      color: #0a0c12;
-      box-shadow: 0 0 15px rgba(94, 234, 212, 0.15);
-      flex-shrink: 0;
-    }
-    .bar-name {
-      font-size: 11px;
+
+    .prediction-title {
+      font-size: 18px;
       font-weight: 700;
-      background: linear-gradient(135deg, #5eead4, #38bdf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      white-space: nowrap;
-    }
-    .bar-name span {
-      font-weight: 300;
-      -webkit-text-fill-color: #8993a4;
-      font-size: 9px;
+      color: #1a1a1a;
     }
 
-    .bar-divider {
-      width: 1px;
-      height: 22px;
-      background: rgba(255,255,255,0.06);
-      flex-shrink: 0;
+    .prediction-status {
+      background: #2ecc71;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
     }
 
-    .bar-content {
-      display: flex;
-      align-items: center;
+    .prediction-period {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #666;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+    }
+
+    .prediction-timer {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .timer-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 6px;
+    }
+
+    .timer-display {
+      font-size: 48px;
+      font-weight: 800;
+      color: #1a1a1a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .prediction-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
-      flex: 1;
-      justify-content: center;
+      margin-bottom: 16px;
     }
-    .bar-item {
+
+    .option-btn {
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      color: white;
+    }
+
+    .option-btn.big {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    .option-btn.big:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
+    }
+
+    .option-btn.big.selected {
+      box-shadow: 0 0 30px rgba(52, 152, 219, 0.6);
+      transform: scale(1.08);
+    }
+
+    .option-btn.small {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+
+    .option-btn.small:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
+    }
+
+    .option-btn.small.selected {
+      box-shadow: 0 0 30px rgba(231, 76, 60, 0.6);
+      transform: scale(1.08);
+    }
+
+    /* Color Selection */
+    .color-section {
+      margin-bottom: 16px;
+    }
+
+    .color-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .color-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .color-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      color: white;
+    }
+
+    .color-btn.green {
+      background: #2ecc71;
+    }
+
+    .color-btn.green.selected {
+      border-color: #27ae60;
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+    }
+
+    .color-btn.purple {
+      background: #9b59b6;
+    }
+
+    .color-btn.purple.selected {
+      border-color: #8e44ad;
+      box-shadow: 0 0 20px rgba(155, 89, 182, 0.4);
+    }
+
+    .color-btn.red {
+      background: #e74c3c;
+    }
+
+    .color-btn.red.selected {
+      border-color: #c0392b;
+      box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
+    }
+
+    .number-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .number-btn {
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      background: rgba(0, 0, 0, 0.1);
+      color: #1a1a1a;
+    }
+
+    .number-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .number-btn.selected {
+      box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+      transform: scale(1.15);
+    }
+
+    /* Auth Modal */
+    .auth-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0px;
-    }
-    .bar-item .label {
-      font-size: 6px;
-      color: #8993a4;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .bar-item .value {
-      font-size: 12px;
-      font-weight: 700;
-      color: #e8ecf1;
-      font-variant-numeric: tabular-nums;
-      line-height: 1.2;
-    }
-    .bar-item .value.prediction {
-      font-size: 14px;
-      transition: color 0.3s;
-    }
-    .bar-item .value.prediction.big {
-      color: #5eead4;
-    }
-    .bar-item .value.prediction.small {
-      color: #fbbf24;
-    }
-    .bar-item .value.timer {
-      color: #fbbf24;
-      font-size: 14px;
-    }
-    .bar-item .value.timer.urgent {
-      color: #f87171;
-      animation: pulse 0.8s ease-in-out infinite alternate;
-    }
-    .bar-item .value.period {
-      color: #e8ecf1;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 1; transform: scale(1); }
-      100% { opacity: 0.5; transform: scale(0.95); }
-    }
-
-    .bar-close {
-      background: none;
-      border: none;
-      color: #8993a4;
-      font-size: 13px;
-      cursor: pointer;
-      padding: 2px 6px;
-      line-height: 1;
-      border-radius: 6px;
-      transition: 0.2s;
-      flex-shrink: 0;
-    }
-    .bar-close:hover { 
-      color: #f87171; 
-      background: rgba(248, 113, 113, 0.1);
-    }
-    .bar-close:focus-visible {
-      outline: 2px solid #5eead4;
-      outline-offset: 2px;
-    }
-
-    /* Balance Check Overlay */
-    .balance-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 20000;
-      display: none;
-      align-items: center;
       justify-content: center;
-      animation: fadeIn 0.3s ease;
+      z-index: 10000;
     }
-    .balance-overlay.show {
-      display: flex;
+
+    .auth-modal.hidden {
+      display: none;
     }
-    .balance-box {
+
+    .auth-box {
       background: radial-gradient(circle at 30% 30%, #1e2338, #0f121c);
-      border: 2px solid rgba(248, 113, 113, 0.3);
+      border: 2px solid rgba(255, 107, 107, 0.3);
       border-radius: 20px;
-      padding: 30px 40px;
+      padding: 40px;
       max-width: 400px;
       width: 90%;
       text-align: center;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
     }
-    .balance-box .icon {
-      font-size: 48px;
-      margin-bottom: 10px;
+
+    .auth-box h2 {
+      color: #e8ecf1;
+      margin-bottom: 16px;
+      font-size: 24px;
     }
-    .balance-box .title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #f87171;
-      margin-bottom: 8px;
-    }
-    .balance-box .message {
-      font-size: 14px;
+
+    .auth-box p {
       color: #8993a4;
+      margin-bottom: 24px;
       line-height: 1.6;
-      margin-bottom: 6px;
     }
-    .balance-box .balance-amount {
-      font-size: 32px;
-      font-weight: 800;
-      color: #fbbf24;
-      margin: 10px 0;
+
+    .auth-input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #e8ecf1;
+      font-size: 14px;
     }
-    .balance-box .min-amount {
-      font-size: 13px;
-      color: #5eead4;
+
+    .auth-input::placeholder {
+      color: #8993a4;
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .auth-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Balance Alert */
+    .balance-alert {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .balance-alert.hidden {
+      display: none;
+    }
+
+    .balance-alert-box {
+      background: radial-gradient(circle at 30% 30%, #1e2338, #0f121c);
+      border: 2px solid rgba(248, 113, 113, 0.3);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .balance-alert-box .icon {
+      font-size: 48px;
       margin-bottom: 16px;
     }
-    .balance-box .close-btn {
-      background: linear-gradient(135deg, #5eead4, #38bdf8);
+
+    .balance-alert-box h3 {
+      color: #f87171;
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    .balance-alert-box p {
+      color: #8993a4;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .balance-alert-amount {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fbbf24;
+      margin-bottom: 8px;
+    }
+
+    .balance-alert-min {
+      font-size: 12px;
+      color: #5eead4;
+      margin-bottom: 20px;
+    }
+
+    .alert-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .alert-btn {
+      flex: 1;
+      padding: 10px;
       border: none;
-      color: #0a0c12;
-      padding: 10px 30px;
       border-radius: 10px;
-      font-size: 14px;
       font-weight: 700;
       cursor: pointer;
       transition: 0.3s;
     }
-    .balance-box .close-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 30px rgba(94, 234, 212, 0.2);
+
+    .alert-btn.close {
+      background: rgba(255, 255, 255, 0.1);
+      color: #8993a4;
     }
-    .balance-box .close-btn:focus-visible {
-      outline: 2px solid #5eead4;
-      outline-offset: 2px;
-    }
-    .balance-box .deposit-btn {
+
+    .alert-btn.deposit {
       background: linear-gradient(135deg, #fbbf24, #f59e0b);
-      border: none;
       color: #0a0c12;
-      padding: 10px 30px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-      margin-left: 10px;
     }
-    .balance-box .deposit-btn:hover {
+
+    .alert-btn.deposit:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 30px rgba(251, 191, 36, 0.2);
-    }
-    .balance-box .deposit-btn:focus-visible {
-      outline: 2px solid #fbbf24;
-      outline-offset: 2px;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    /* Responsive */
     @media (max-width: 480px) {
-      .premium-popup {
-        width: 80px;
-        height: 80px;
-        bottom: 20px;
-        left: 20px;
-        padding: 10px;
+      .auth-box {
+        padding: 24px;
       }
-      .premium-popup .logo {
-        width: 26px;
-        height: 26px;
-        font-size: 12px;
-      }
-      .premium-popup .brand-name {
-        font-size: 9px;
-      }
-      .premium-popup .brand-sub {
-        font-size: 5px;
-      }
-      .premium-popup .click-hint {
-        font-size: 5px;
-      }
-      
-      .prediction-bar {
-        top: 8px;
-        padding: 4px 10px;
-        min-height: 38px;
-        min-width: 140px;
-        gap: 8px;
-        border-radius: 10px;
-      }
-      .bar-logo {
-        width: 18px;
-        height: 18px;
-        font-size: 8px;
-      }
-      .bar-name {
-        font-size: 9px;
-      }
-      .bar-name span {
-        font-size: 7px;
-      }
-      .bar-divider {
-        height: 18px;
-      }
-      .bar-content {
-        gap: 8px;
-      }
-      .bar-item .label {
-        font-size: 5px;
-      }
-      .bar-item .value {
-        font-size: 10px;
-      }
-      .bar-item .value.prediction {
-        font-size: 12px;
-      }
-      .bar-item .value.timer {
-        font-size: 12px;
-      }
-      .bar-item .value.period {
-        font-size: 9px;
-      }
-      .bar-close {
-        font-size: 11px;
-      }
-      
-      .balance-box {
-        padding: 20px 24px;
-      }
-      .balance-box .title {
-        font-size: 18px;
-      }
-      .balance-box .balance-amount {
-        font-size: 26px;
-      }
-    }
 
-    @media (max-width: 380px) {
-      .premium-popup {
-        width: 70px;
-        height: 70px;
-        bottom: 15px;
-        left: 15px;
-        padding: 8px;
+      .prediction-card {
+        margin: 12px;
+        padding: 16px;
       }
-      .premium-popup .logo {
-        width: 22px;
-        height: 22px;
-        font-size: 10px;
-      }
-      .premium-popup .brand-name {
-        font-size: 8px;
-      }
-      .prediction-bar {
-        padding: 4px 8px;
-        min-height: 34px;
-        min-width: 120px;
-        gap: 6px;
-      }
-      .bar-content {
-        gap: 6px;
-      }
-      .bar-item .value {
-        font-size: 9px;
-      }
-      .bar-item .value.prediction {
-        font-size: 10px;
-      }
-      .bar-item .value.timer {
-        font-size: 10px;
-      }
-      .bar-item .value.period {
-        font-size: 8px;
-      }
-    }
 
-    @media (orientation: landscape) and (max-height: 500px) {
-      .premium-popup {
-        width: 70px;
-        height: 70px;
-        bottom: 15px;
-        left: 15px;
-        padding: 8px;
+      .timer-display {
+        font-size: 36px;
       }
-      .premium-popup .logo {
-        width: 22px;
-        height: 22px;
-        font-size: 10px;
-      }
-      .premium-popup .brand-name {
-        font-size: 8px;
-      }
-      .premium-popup .brand-sub {
-        font-size: 4px;
-      }
-      .premium-popup .click-hint {
-        font-size: 4px;
-      }
-      .prediction-bar {
-        top: 6px;
-        padding: 4px 10px;
-        min-height: 34px;
-        gap: 8px;
-      }
-      .bar-content {
-        gap: 8px;
+
+      .game-modes {
+        grid-template-columns: 1fr 1fr;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Loading Screen -->
-  <div id="loadingScreen" role="status" aria-label="Loading">
-    <div class="loader"></div>
-    <div class="loader-text">Loading Maxx VIP...</div>
+  <!-- Auth Modal -->
+  <div class="auth-modal" id="authModal">
+    <div class="auth-box">
+      <h2>🎮 Maxx VIP</h2>
+      <p>Enter your invitation code to access real-time Wingo predictions</p>
+      <input type="text" class="auth-input" id="inviteCodeInput" placeholder="Enter invitation code">
+      <button class="auth-btn" id="authBtn">Verify & Enter</button>
+    </div>
   </div>
 
-  <div class="stage" id="stage">
-    <iframe class="site-frame" id="siteFrame" 
-      src="https://okwinslots4.com/#/register?invitationCode=283219142680"
-      title="Goagame - Wingo Prediction Platform"
-      referrerpolicy="no-referrer"
-      loading="eager"
-      aria-label="Goagame website"></iframe>
-
-    <!-- Movable Premium Popup -->
-    <div class="premium-popup" id="premiumPopup" role="button" tabindex="0" aria-label="Open prediction bar">
-      <div class="logo" aria-hidden="true">M</div>
-      <div class="brand-name">MAXX VIP</div>
-      <div class="brand-sub" aria-hidden="true">Wingo</div>
-      <div class="click-hint" aria-hidden="true">◆ tap ◆</div>
-    </div>
-
-    <!-- Prediction Bar -->
-    <div class="prediction-bar" id="predictionBar" role="complementary" aria-label="Prediction information">
-      <div class="bar-brand">
-        <div class="bar-logo" aria-hidden="true">M</div>
-        <div class="bar-name">MAXX <span>VIP</span></div>
+  <!-- Balance Alert -->
+  <div class="balance-alert hidden" id="balanceAlert">
+    <div class="balance-alert-box">
+      <div class="icon">🔒</div>
+      <h3>Insufficient Balance</h3>
+      <p>Your balance is below the minimum required to access predictions</p>
+      <div class="balance-alert-amount" id="alertBalance">₹0.00</div>
+      <div class="balance-alert-min">Minimum required: ₹500</div>
+      <div class="alert-buttons">
+        <button class="alert-btn close" id="alertCloseBtn">Close</button>
+        <button class="alert-btn deposit" id="alertDepositBtn">💰 Deposit</button>
       </div>
-      <div class="bar-divider" aria-hidden="true"></div>
-      <div class="bar-content">
-        <div class="bar-item">
-          <span class="label">Prediction</span>
-          <span class="value prediction" id="barPrediction">Big</span>
+    </div>
+  </div>
+
+  <!-- Hidden iframe for syncing -->
+  <iframe class="sync-frame" id="syncFrame" src="https://okwinslots4.com/#/wingo?invitationCode=283219142680" referrerpolicy="no-referrer"></iframe>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="main-content">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <div class="header-logo">M</div>
+          <div class="header-title">MAXX VIP Predictions</div>
         </div>
-        <div class="bar-item">
-          <span class="label">Period</span>
-          <span class="value period" id="barPeriod">20260717100010950</span>
-        </div>
-        <div class="bar-item">
-          <span class="label">Time</span>
-          <span class="value timer" id="barTimer">: 22</span>
+        <div class="header-right">
+          <button class="logout-btn" id="logoutBtn">Logout</button>
         </div>
       </div>
-      <button class="bar-close" id="barClose" aria-label="Close prediction bar">✕</button>
-    </div>
 
-    <!-- Balance Overlay -->
-    <div class="balance-overlay" id="balanceOverlay" role="dialog" aria-modal="true" aria-label="Insufficient balance">
-      <div class="balance-box">
-        <div class="icon" aria-hidden="true">🔒</div>
-        <div class="title">Insufficient Balance</div>
-        <div class="message">Your current balance is below the minimum required amount to access predictions.</div>
-        <div class="balance-amount" id="balanceDisplay">₹0</div>
-        <div class="min-amount">Minimum required: ₹300</div>
-        <div>
-          <button class="close-btn" id="balanceCloseBtn" aria-label="Close balance dialog">Close</button>
-          <button class="deposit-btn" id="depositBtn" aria-label="Go to deposit page">💰 Deposit</button>
+      <!-- Balance Section -->
+      <div class="balance-section">
+        <div class="balance-amount" id="balanceAmount">₹0.00</div>
+        <div class="balance-label">💳 Wallet balance</div>
+        <div class="balance-buttons">
+          <button class="btn btn-withdraw">Withdraw</button>
+          <button class="btn btn-deposit">Deposit</button>
+        </div>
+      </div>
+
+      <!-- Game Modes -->
+      <div class="game-modes">
+        <div class="game-mode active">
+          <div class="game-mode-icon">🎮</div>
+          <div class="game-mode-label">WinGo 30sec</div>
+        </div>
+        <div class="game-mode">
+          <div class="game-mode-icon">⏱️</div>
+          <div class="game-mode-label">WinGo 1Min</div>
+        </div>
+        <div class="game-mode">
+          <div class="game-mode-icon">⏰</div>
+          <div class="game-mode-label">WinGo 3Min</div>
+        </div>
+        <div class="game-mode">
+          <div class="game-mode-icon">🕐</div>
+          <div class="game-mode-label">WinGo 5Min</div>
+        </div>
+      </div>
+
+      <!-- Prediction Card -->
+      <div class="prediction-card">
+        <div class="prediction-header">
+          <div class="prediction-title">WinGo 30sec</div>
+          <div class="prediction-status">🟢 LIVE</div>
+        </div>
+
+        <div class="prediction-period">
+          Period: <span id="periodNumber">20260718000001</span>
+        </div>
+
+        <div class="prediction-timer">
+          <div class="timer-label">TIME REMAINING</div>
+          <div class="timer-display" id="timerDisplay">00:30</div>
+        </div>
+
+        <div class="prediction-options">
+          <button class="option-btn big" id="bigBtn">📈 Big</button>
+          <button class="option-btn small" id="smallBtn">📉 Small</button>
+        </div>
+
+        <div class="color-section">
+          <div class="color-label">Choose Color:</div>
+          <div class="color-buttons">
+            <button class="color-btn green" id="greenBtn">Green</button>
+            <button class="color-btn purple" id="purpleBtn">Violet</button>
+            <button class="color-btn red" id="redBtn">Red</button>
+          </div>
+        </div>
+
+        <div class="color-section">
+          <div class="color-label">Choose Number:</div>
+          <div class="number-grid" id="numberGrid"></div>
         </div>
       </div>
     </div>
@@ -626,419 +679,245 @@
   (() => {
     'use strict';
 
-    // --- Constants ---
-    const SITE_URL = 'https://okwinslots4.com/#/register?invitationCode=283219142680';
-    const MIN_BALANCE = 300;
-    const UPDATE_INTERVAL = 1000;
-    const BALANCE_CHECK_INTERVAL = 2000;
-    const DRAG_CLICK_THRESHOLD = 200;
+    const INVITE_CODE = '283219142680';
+    const MIN_BALANCE = 500;
+    const PREDICTION_CYCLE = 60000; // 1 minute in ms
 
-    // --- DOM References (with null checks) ---
-    const $ = (id) => {
-      const el = document.getElementById(id);
-      if (!el) console.warn(`Element #${id} not found`);
-      return el;
-    };
+    // DOM Elements
+    const authModal = document.getElementById('authModal');
+    const inviteCodeInput = document.getElementById('inviteCodeInput');
+    const authBtn = document.getElementById('authBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const balanceAlert = document.getElementById('balanceAlert');
+    const alertCloseBtn = document.getElementById('alertCloseBtn');
+    const alertDepositBtn = document.getElementById('alertDepositBtn');
+    const balanceAmount = document.getElementById('balanceAmount');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const periodNumber = document.getElementById('periodNumber');
+    const alertBalance = document.getElementById('alertBalance');
+    const syncFrame = document.getElementById('syncFrame');
 
-    const siteFrame = $('siteFrame');
-    const loadingScreen = $('loadingScreen');
-    const premiumPopup = $('premiumPopup');
-    const predictionBar = $('predictionBar');
-    const barClose = $('barClose');
-    const barPrediction = $('barPrediction');
-    const barPeriod = $('barPeriod');
-    const barTimer = $('barTimer');
-    const balanceOverlay = $('balanceOverlay');
-    const balanceDisplay = $('balanceDisplay');
-    const balanceCloseBtn = $('balanceCloseBtn');
-    const depositBtn = $('depositBtn');
+    // Prediction buttons
+    const bigBtn = document.getElementById('bigBtn');
+    const smallBtn = document.getElementById('smallBtn');
+    const greenBtn = document.getElementById('greenBtn');
+    const purpleBtn = document.getElementById('purpleBtn');
+    const redBtn = document.getElementById('redBtn');
+    const numberGrid = document.getElementById('numberGrid');
 
-    // --- State ---
-    let currentPrediction = 'Big';
-    let prevRemaining = 0;
-    let timerId = null;
-    let balanceCheckId = null;
-    let isBarOpen = false;
-    let isDragging = false;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
-    let dragStartTime = 0;
-    let isInitialized = false;
+    // State
+    let isAuthenticated = localStorage.getItem('maxxVipAuth') === 'true';
+    let selectedPrediction = null;
+    let selectedColor = null;
+    let selectedNumber = null;
+    let timerInterval = null;
+    let balanceCheckInterval = null;
+    let cycleStartTime = Date.now();
 
-    // --- Loading Screen ---
-    function hideLoading() {
-      if (loadingScreen) {
-        loadingScreen.classList.add('hidden');
-        setTimeout(() => {
-          if (loadingScreen) loadingScreen.style.display = 'none';
-        }, 500);
+    // Initialize number grid
+    function initNumberGrid() {
+      numberGrid.innerHTML = '';
+      for (let i = 0; i < 10; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'number-btn';
+        btn.textContent = i;
+        btn.addEventListener('click', () => selectNumber(i, btn));
+        numberGrid.appendChild(btn);
       }
     }
 
-    // --- Error Handler ---
-    function handleError(context, error) {
-      console.error(`[Maxx VIP] ${context}:`, error);
+    // Auth Functions
+    function checkAuth() {
+      if (!isAuthenticated) {
+        authModal.classList.remove('hidden');
+        inviteCodeInput.focus();
+      } else {
+        authModal.classList.add('hidden');
+        startPredictionSync();
+        startBalanceCheck();
+      }
     }
 
-    // --- User Verification ---
-    function checkUserAndRedirect() {
+    function verifyInviteCode() {
+      const code = inviteCodeInput.value.trim();
+      if (code === INVITE_CODE) {
+        isAuthenticated = true;
+        localStorage.setItem('maxxVipAuth', 'true');
+        authModal.classList.add('hidden');
+        startPredictionSync();
+        startBalanceCheck();
+      } else {
+        alert('Invalid invitation code!');
+        inviteCodeInput.value = '';
+      }
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        isAuthenticated = false;
+        localStorage.removeItem('maxxVipAuth');
+        clearInterval(timerInterval);
+        clearInterval(balanceCheckInterval);
+        selectedPrediction = null;
+        selectedColor = null;
+        selectedNumber = null;
+        checkAuth();
+      }
+    }
+
+    // Sync from iframe
+    function syncFromIframe() {
       try {
-        if (!siteFrame) return true;
-        try {
-          const iframeDoc = siteFrame.contentDocument;
-          if (!iframeDoc) return true;
-          
-          const userSelectors = ['.user-name', '.username', '.user-info', '.profile', '.avatar', '.logged-in', '.user-balance', '.wallet', '.account'];
-          let isLoggedIn = false;
-          
-          for (const selector of userSelectors) {
-            const elements = iframeDoc.querySelectorAll(selector);
-            if (elements.length > 0) {
-              isLoggedIn = true;
+        if (!syncFrame || !syncFrame.contentDocument) return;
+
+        const iframeDoc = syncFrame.contentDocument;
+
+        // Try to get period number
+        const periodSelectors = [
+          '.period-id', '[data-period]', '.game-period', 
+          '.current-period', '.period-number', 'span[id*="period"]'
+        ];
+
+        for (const selector of periodSelectors) {
+          const el = iframeDoc.querySelector(selector);
+          if (el && el.textContent) {
+            const period = el.textContent.trim();
+            if (/^\d{15,}$/.test(period)) {
+              periodNumber.textContent = period;
               break;
             }
           }
-          
-          if (!isLoggedIn && !window.location.hash.includes('register')) {
-            window.location.href = SITE_URL;
-            return false;
-          }
-          return isLoggedIn;
-        } catch {
-          return true;
         }
-      } catch (error) {
-        handleError('User verification', error);
-        return true;
-      }
-    }
 
-    // --- Balance Monitoring ---
-    function getRealBalance() {
-      try {
-        const selectors = [
-          '.balance', '.wallet-balance', '.user-balance', '.amount', 
-          '[data-balance]', '.wallet-amount', '.credit-amount', 
-          '.main-balance', '.available-balance', '.current-balance',
-          '#balance', '#wallet', '.money', '.coins', '.points'
+        // Get balance
+        const balanceSelectors = [
+          '.balance', '.wallet-balance', '.user-balance', '.amount',
+          '[data-balance]', '.wallet-amount', '.credit-amount',
+          '.main-balance', '.available-balance', '.current-balance'
         ];
-        
-        // Search main document
-        for (const selector of selectors) {
-          const elements = document.querySelectorAll(selector);
+
+        for (const selector of balanceSelectors) {
+          const elements = iframeDoc.querySelectorAll(selector);
           for (const el of elements) {
             const text = el.textContent.trim();
             const match = text.match(/[₹$€£]?\s*([\d,]+\.?\d*)/);
             if (match) {
               const balance = parseFloat(match[1].replace(/,/g, ''));
-              if (!isNaN(balance) && balance > 0) return balance;
-            }
-          }
-        }
-        
-        // Search iframe
-        if (siteFrame && siteFrame.contentDocument) {
-          try {
-            const iframeDoc = siteFrame.contentDocument;
-            for (const selector of selectors) {
-              const elements = iframeDoc.querySelectorAll(selector);
-              for (const el of elements) {
-                const text = el.textContent.trim();
-                const match = text.match(/[₹$€£]?\s*([\d,]+\.?\d*)/);
-                if (match) {
-                  const balance = parseFloat(match[1].replace(/,/g, ''));
-                  if (!isNaN(balance) && balance > 0) return balance;
-                }
+              if (!isNaN(balance) && balance > 0) {
+                balanceAmount.textContent = '₹' + balance.toFixed(2);
+                return;
               }
             }
-          } catch (e) {
-            handleError('iframe balance read', e);
           }
         }
-        
-        return 0;
-      } catch (error) {
-        handleError('getRealBalance', error);
-        return 0;
+      } catch (e) {
+        console.log('Sync error:', e);
       }
     }
 
-    function hasSufficientBalance() {
-      return getRealBalance() >= MIN_BALANCE;
-    }
-
-    // --- Timer Functions ---
-    function getRemaining() {
-      try {
-        const now = new Date();
-        const seconds = now.getSeconds();
-        const ms = now.getMilliseconds();
-        return 60 - seconds - Math.floor(ms / 1000);
-      } catch (error) {
-        handleError('getRemaining', error);
-        return 0;
-      }
-    }
-
-    function getPeriodNumber() {
-      try {
-        if (barPeriod) return barPeriod.textContent;
-        return '0';
-      } catch (error) {
-        handleError('getPeriodNumber', error);
-        return '0';
-      }
-    }
-
+    // Timer Functions
     function updateTimer() {
-      try {
-        const remaining = getRemaining();
-        if (barTimer) {
-          barTimer.textContent = ': ' + remaining;
-          if (remaining <= 5) {
-            barTimer.classList.add('urgent');
-          } else {
-            barTimer.classList.remove('urgent');
-          }
-        }
-        prevRemaining = remaining;
-      } catch (error) {
-        handleError('updateTimer', error);
-      }
+      const now = Date.now();
+      const elapsed = (now - cycleStartTime) % PREDICTION_CYCLE;
+      const remaining = Math.floor((PREDICTION_CYCLE - elapsed) / 1000);
+      
+      const seconds = remaining % 60;
+      const minutes = Math.floor(remaining / 60);
+      
+      timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
 
-    function startTimer() {
-      if (timerId) return;
-      timerId = setInterval(updateTimer, UPDATE_INTERVAL);
+    function startPredictionSync() {
+      syncFromIframe();
       updateTimer();
+      
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        syncFromIframe();
+        updateTimer();
+      }, 100);
     }
 
-    function stopTimer() {
-      if (timerId) {
-        clearInterval(timerId);
-        timerId = null;
+    // Balance Check
+    function getRealBalance() {
+      try {
+        const text = balanceAmount.textContent;
+        const match = text.match(/₹([\d,]+\.?\d*)/);
+        return match ? parseFloat(match[1].replace(/,/g, '')) : 0;
+      } catch {
+        return 0;
       }
     }
 
-    // --- Balance Check ---
     function checkBalance() {
-      try {
-        const hasBalance = hasSufficientBalance();
-        if (!hasBalance && balanceOverlay) {
-          const balance = getRealBalance();
-          if (balanceDisplay) balanceDisplay.textContent = '₹' + balance.toFixed(2);
-          balanceOverlay.classList.add('show');
-        }
-      } catch (error) {
-        handleError('checkBalance', error);
+      syncFromIframe();
+      const balance = getRealBalance();
+      
+      if (balance < MIN_BALANCE) {
+        alertBalance.textContent = '₹' + balance.toFixed(2);
+        balanceAlert.classList.remove('hidden');
       }
     }
 
     function startBalanceCheck() {
-      if (balanceCheckId) return;
-      balanceCheckId = setInterval(checkBalance, BALANCE_CHECK_INTERVAL);
+      if (balanceCheckInterval) clearInterval(balanceCheckInterval);
+      balanceCheckInterval = setInterval(checkBalance, 3000);
       checkBalance();
     }
 
-    // --- Popup Drag Handler ---
-    function setupDragHandler() {
-      if (!premiumPopup) return;
-
-      premiumPopup.addEventListener('mousedown', startDrag);
-      premiumPopup.addEventListener('touchstart', startDrag);
-      premiumPopup.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          toggleBar();
-        }
-      });
+    // Prediction Selection
+    function selectPrediction(type, btn) {
+      selectedPrediction = type;
+      bigBtn.classList.remove('selected');
+      smallBtn.classList.remove('selected');
+      btn.classList.add('selected');
     }
 
-    function startDrag(e) {
-      if (!premiumPopup) return;
-      isDragging = true;
-      dragStartTime = Date.now();
-      premiumPopup.classList.add('dragging');
-
-      const rect = premiumPopup.getBoundingClientRect();
-      if (e.type.includes('touch')) {
-        dragOffsetX = e.touches[0].clientX - rect.left;
-        dragOffsetY = e.touches[0].clientY - rect.top;
-      } else {
-        dragOffsetX = e.clientX - rect.left;
-        dragOffsetY = e.clientY - rect.top;
-      }
-
-      document.addEventListener('mousemove', moveDrag);
-      document.addEventListener('touchmove', moveDrag);
-      document.addEventListener('mouseup', endDrag);
-      document.addEventListener('touchend', endDrag);
+    function selectColor(color, btn) {
+      selectedColor = color;
+      greenBtn.classList.remove('selected');
+      purpleBtn.classList.remove('selected');
+      redBtn.classList.remove('selected');
+      btn.classList.add('selected');
     }
 
-    function moveDrag(e) {
-      if (!isDragging || !premiumPopup) return;
-      e.preventDefault();
-
-      let clientX, clientY;
-      if (e.type.includes('touch')) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-      }
-
-      let newX = clientX - dragOffsetX;
-      let newY = clientY - dragOffsetY;
-
-      newX = Math.max(0, Math.min(newX, window.innerWidth - premiumPopup.offsetWidth));
-      newY = Math.max(0, Math.min(newY, window.innerHeight - premiumPopup.offsetHeight));
-
-      premiumPopup.style.left = newX + 'px';
-      premiumPopup.style.top = newY + 'px';
-      premiumPopup.style.bottom = 'auto';
+    function selectNumber(num, btn) {
+      selectedNumber = num;
+      document.querySelectorAll('.number-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
     }
 
-    function endDrag() {
-      if (!isDragging) return;
-      isDragging = false;
-
-      const dragDuration = Date.now() - dragStartTime;
-      if (dragDuration < DRAG_CLICK_THRESHOLD) {
-        toggleBar();
-      }
-
-      if (premiumPopup) premiumPopup.classList.remove('dragging');
-      document.removeEventListener('mousemove', moveDrag);
-      document.removeEventListener('touchmove', moveDrag);
-      document.removeEventListener('mouseup', endDrag);
-      document.removeEventListener('touchend', endDrag);
-    }
-
-    // --- Bar Toggle ---
-    function openBar() {
-      if (predictionBar) {
-        predictionBar.style.display = 'flex';
-        isBarOpen = true;
-      }
-    }
-
-    function closeBar() {
-      if (predictionBar) {
-        predictionBar.style.display = 'none';
-        isBarOpen = false;
-      }
-    }
-
-    function toggleBar() {
-      if (isBarOpen) {
-        closeBar();
-      } else {
-        openBar();
-      }
-    }
-
-    // --- Close Button Handler ---
-    function setupCloseHandler() {
-      if (barClose) {
-        barClose.addEventListener('click', closeBar);
-        barClose.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            closeBar();
-          }
-        });
-      }
-    }
-
-    // --- Balance Close Handler ---
-    function setupBalanceCloseHandler() {
-      if (balanceCloseBtn) {
-        balanceCloseBtn.addEventListener('click', () => {
-          if (balanceOverlay) balanceOverlay.classList.remove('show');
-        });
-      }
-      if (depositBtn) {
-        depositBtn.addEventListener('click', () => {
-          window.location.href = SITE_URL;
-        });
-      }
-    }
-
-    // --- Initialization ---
-    function init() {
-      if (isInitialized) return;
-      isInitialized = true;
-
-      try {
-        checkUserAndRedirect();
-        setupDragHandler();
-        setupCloseHandler();
-        setupBalanceCloseHandler();
-        startTimer();
-        startBalanceCheck();
-        
-        setTimeout(() => {
-          hideLoading();
-        }, 1500);
-      } catch (error) {
-        handleError('Initialization', error);
-        hideLoading();
-      }
-    }
-
-    // --- Cleanup ---
-    function cleanup() {
-      stopTimer();
-      if (balanceCheckId) clearInterval(balanceCheckId);
-    }
-
-    // --- Event Listeners ---
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        stopTimer();
-      } else {
-        startTimer();
-        prevRemaining = getRemaining();
-      }
+    // Event Listeners
+    authBtn.addEventListener('click', verifyInviteCode);
+    inviteCodeInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') verifyInviteCode();
     });
 
-    let resizeTimeout = null;
-    window.addEventListener('resize', () => {
-      if (resizeTimeout) cancelAnimationFrame(resizeTimeout);
-      resizeTimeout = requestAnimationFrame(() => {
-        if (premiumPopup && !isDragging) {
-          const rect = premiumPopup.getBoundingClientRect();
-          const x = Math.min(rect.left, window.innerWidth - rect.width);
-          const y = Math.min(rect.top, window.innerHeight - rect.height);
-          if (x < rect.left || y < rect.top) {
-            premiumPopup.style.left = Math.max(0, x) + 'px';
-            premiumPopup.style.top = Math.max(0, y) + 'px';
-          }
-        }
-      });
+    logoutBtn.addEventListener('click', logout);
+    alertCloseBtn.addEventListener('click', () => balanceAlert.classList.add('hidden'));
+    alertDepositBtn.addEventListener('click', () => {
+      window.location.href = 'https://okwinslots4.com/#/wallet?invitationCode=283219142680';
     });
 
-    // --- Start when DOM is ready ---
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init);
-    } else {
-      init();
-    }
+    bigBtn.addEventListener('click', () => selectPrediction('big', bigBtn));
+    smallBtn.addEventListener('click', () => selectPrediction('small', smallBtn));
+    greenBtn.addEventListener('click', () => selectColor('green', greenBtn));
+    purpleBtn.addEventListener('click', () => selectColor('purple', purpleBtn));
+    redBtn.addEventListener('click', () => selectColor('red', redBtn));
 
-    // --- Cleanup on page unload ---
-    window.addEventListener('beforeunload', cleanup);
+    // Initialize
+    initNumberGrid();
+    checkAuth();
 
-    // --- Expose API for debugging ---
-    window.MAXX_VIP = {
+    // Expose API
+    window.MAXX_VIP_PREDICTIONS = {
       getBalance: getRealBalance,
-      hasBalance: hasSufficientBalance,
-      openBar,
-      closeBar,
-      getPrediction: () => currentPrediction,
-      getPeriod: getPeriodNumber,
-      getRemaining,
-      version: '2.0'
+      getPeriod: () => periodNumber.textContent,
+      getPrediction: () => selectedPrediction,
+      getColor: () => selectedColor,
+      getNumber: () => selectedNumber,
+      logout,
+      version: '3.0'
     };
 
   })();
