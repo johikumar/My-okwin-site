@@ -621,6 +621,7 @@
       </div>
     </div>
   </div>
+
   <script>
   (() => {
     'use strict';
@@ -746,56 +747,301 @@
                 const match = text.match(/[₹$€£]?\s*([\d,]+\.?\d*)/);
                 if (match) {
                   const balance = parseFloat(match[1].replace(/,/g, ''));
-         // --- Handle visibility change (pause/resume on tab switch) ---
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    stopTimer();
-  } else {
-    startTimer();
-    prevRemaining = getRemaining();
-  }
-});
-
-// --- Handle resize (keep popup in bounds) ---
-let resizeTimeout = null;
-window.addEventListener('resize', () => {
-  if (resizeTimeout) cancelAnimationFrame(resizeTimeout);
-  resizeTimeout = requestAnimationFrame(() => {
-    if (premiumPopup && !isDragging) {
-      const rect = premiumPopup.getBoundingClientRect();
-      const x = Math.min(rect.left, window.innerWidth - rect.width);
-      const y = Math.min(rect.top, window.innerHeight - rect.height);
-      if (x < rect.left || y < rect.top) {
-        premiumPopup.style.left = Math.max(0, x) + 'px';
-        premiumPopup.style.top = Math.max(0, y) + 'px';
+                  if (!isNaN(balance) && balance > 0) return balance;
+                }
+              }
+            }
+          } catch (e) {
+            handleError('iframe balance read', e);
+          }
+        }
+        
+        return 0;
+      } catch (error) {
+        handleError('getRealBalance', error);
+        return 0;
       }
     }
-  });
-});
 
-// --- Start when DOM is ready ---
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+    function hasSufficientBalance() {
+      return getRealBalance() >= MIN_BALANCE;
+    }
 
-// --- Cleanup on page unload ---
-window.addEventListener('beforeunload', cleanup);
+    // --- Timer Functions ---
+    function getRemaining() {
+      try {
+        const now = new Date();
+        const seconds = now.getSeconds();
+        const ms = now.getMilliseconds();
+        return 60 - seconds - Math.floor(ms / 1000);
+      } catch (error) {
+        handleError('getRemaining', error);
+        return 0;
+      }
+    }
 
-// --- Expose API for debugging ---
-window.MAXX_VIP = {
-  getBalance: getRealBalance,
-  hasBalance: hasSufficientBalance,
-  openBar,
-  closeBar,
-  getPrediction: () => currentPrediction,
-  getPeriod: getPeriodNumber,
-  getRemaining,
-  version: '2.0'
-};
+    function getPeriodNumber() {
+      try {
+        if (barPeriod) return barPeriod.textContent;
+        return '0';
+      } catch (error) {
+        handleError('getPeriodNumber', error);
+        return '0';
+      }
+    }
 
-})();
-</script>
+    function updateTimer() {
+      try {
+        const remaining = getRemaining();
+        if (barTimer) {
+          barTimer.textContent = ': ' + remaining;
+          if (remaining <= 5) {
+            barTimer.classList.add('urgent');
+          } else {
+            barTimer.classList.remove('urgent');
+          }
+        }
+        prevRemaining = remaining;
+      } catch (error) {
+        handleError('updateTimer', error);
+      }
+    }
+
+    function startTimer() {
+      if (timerId) return;
+      timerId = setInterval(updateTimer, UPDATE_INTERVAL);
+      updateTimer();
+    }
+
+    function stopTimer() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    // --- Balance Check ---
+    function checkBalance() {
+      try {
+        const hasBalance = hasSufficientBalance();
+        if (!hasBalance && balanceOverlay) {
+          const balance = getRealBalance();
+          if (balanceDisplay) balanceDisplay.textContent = '₹' + balance.toFixed(2);
+          balanceOverlay.classList.add('show');
+        }
+      } catch (error) {
+        handleError('checkBalance', error);
+      }
+    }
+
+    function startBalanceCheck() {
+      if (balanceCheckId) return;
+      balanceCheckId = setInterval(checkBalance, BALANCE_CHECK_INTERVAL);
+      checkBalance();
+    }
+
+    // --- Popup Drag Handler ---
+    function setupDragHandler() {
+      if (!premiumPopup) return;
+
+      premiumPopup.addEventListener('mousedown', startDrag);
+      premiumPopup.addEventListener('touchstart', startDrag);
+      premiumPopup.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleBar();
+        }
+      });
+    }
+
+    function startDrag(e) {
+      if (!premiumPopup) return;
+      isDragging = true;
+      dragStartTime = Date.now();
+      premiumPopup.classList.add('dragging');
+
+      const rect = premiumPopup.getBoundingClientRect();
+      if (e.type.includes('touch')) {
+        dragOffsetX = e.touches[0].clientX - rect.left;
+        dragOffsetY = e.touches[0].clientY - rect.top;
+      } else {
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+      }
+
+      document.addEventListener('mousemove', moveDrag);
+      document.addEventListener('touchmove', moveDrag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchend', endDrag);
+    }
+
+    function moveDrag(e) {
+      if (!isDragging || !premiumPopup) return;
+      e.preventDefault();
+
+      let clientX, clientY;
+      if (e.type.includes('touch')) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      let newX = clientX - dragOffsetX;
+      let newY = clientY - dragOffsetY;
+
+      newX = Math.max(0, Math.min(newX, window.innerWidth - premiumPopup.offsetWidth));
+      newY = Math.max(0, Math.min(newY, window.innerHeight - premiumPopup.offsetHeight));
+
+      premiumPopup.style.left = newX + 'px';
+      premiumPopup.style.top = newY + 'px';
+      premiumPopup.style.bottom = 'auto';
+    }
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+
+      const dragDuration = Date.now() - dragStartTime;
+      if (dragDuration < DRAG_CLICK_THRESHOLD) {
+        toggleBar();
+      }
+
+      if (premiumPopup) premiumPopup.classList.remove('dragging');
+      document.removeEventListener('mousemove', moveDrag);
+      document.removeEventListener('touchmove', moveDrag);
+      document.removeEventListener('mouseup', endDrag);
+      document.removeEventListener('touchend', endDrag);
+    }
+
+    // --- Bar Toggle ---
+    function openBar() {
+      if (predictionBar) {
+        predictionBar.style.display = 'flex';
+        isBarOpen = true;
+      }
+    }
+
+    function closeBar() {
+      if (predictionBar) {
+        predictionBar.style.display = 'none';
+        isBarOpen = false;
+      }
+    }
+
+    function toggleBar() {
+      if (isBarOpen) {
+        closeBar();
+      } else {
+        openBar();
+      }
+    }
+
+    // --- Close Button Handler ---
+    function setupCloseHandler() {
+      if (barClose) {
+        barClose.addEventListener('click', closeBar);
+        barClose.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            closeBar();
+          }
+        });
+      }
+    }
+
+    // --- Balance Close Handler ---
+    function setupBalanceCloseHandler() {
+      if (balanceCloseBtn) {
+        balanceCloseBtn.addEventListener('click', () => {
+          if (balanceOverlay) balanceOverlay.classList.remove('show');
+        });
+      }
+      if (depositBtn) {
+        depositBtn.addEventListener('click', () => {
+          window.location.href = SITE_URL;
+        });
+      }
+    }
+
+    // --- Initialization ---
+    function init() {
+      if (isInitialized) return;
+      isInitialized = true;
+
+      try {
+        checkUserAndRedirect();
+        setupDragHandler();
+        setupCloseHandler();
+        setupBalanceCloseHandler();
+        startTimer();
+        startBalanceCheck();
+        
+        setTimeout(() => {
+          hideLoading();
+        }, 1500);
+      } catch (error) {
+        handleError('Initialization', error);
+        hideLoading();
+      }
+    }
+
+    // --- Cleanup ---
+    function cleanup() {
+      stopTimer();
+      if (balanceCheckId) clearInterval(balanceCheckId);
+    }
+
+    // --- Event Listeners ---
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopTimer();
+      } else {
+        startTimer();
+        prevRemaining = getRemaining();
+      }
+    });
+
+    let resizeTimeout = null;
+    window.addEventListener('resize', () => {
+      if (resizeTimeout) cancelAnimationFrame(resizeTimeout);
+      resizeTimeout = requestAnimationFrame(() => {
+        if (premiumPopup && !isDragging) {
+          const rect = premiumPopup.getBoundingClientRect();
+          const x = Math.min(rect.left, window.innerWidth - rect.width);
+          const y = Math.min(rect.top, window.innerHeight - rect.height);
+          if (x < rect.left || y < rect.top) {
+            premiumPopup.style.left = Math.max(0, x) + 'px';
+            premiumPopup.style.top = Math.max(0, y) + 'px';
+          }
+        }
+      });
+    });
+
+    // --- Start when DOM is ready ---
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    // --- Cleanup on page unload ---
+    window.addEventListener('beforeunload', cleanup);
+
+    // --- Expose API for debugging ---
+    window.MAXX_VIP = {
+      getBalance: getRealBalance,
+      hasBalance: hasSufficientBalance,
+      openBar,
+      closeBar,
+      getPrediction: () => currentPrediction,
+      getPeriod: getPeriodNumber,
+      getRemaining,
+      version: '2.0'
+    };
+
+  })();
+  </script>
 </body>
 </html>
