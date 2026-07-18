@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Maxx VIP - Wingo</title>
+  <style>
+    /* Reset & Base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      height: 100%;
+      background: #0a0c12;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #e8ecf1;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+    .stage {
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+      background: #0b0d12;
+    }
+
+    /* Loading Screen */
+    #loadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0c12;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      transition: opacity 0.5s ease;
+    }
+    #loadingScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(94, 234, 212, 0.1);
+      border-top: 3px solid #5eead4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .loader-text {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #8993a4;
+      letter-spacing: 0.1em;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .site-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #1a1e28;
+      z-index: 1;
+    }
+
+    /* ---------- MOVABLE PREMIUM POPUP ---------- */
+    .premium-popup {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle at 35% 35%, #1e2338, #0f121c);
+      border-radius: 50%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 40px rgba(94, 234, 212, 0.05);
+      border: 2px solid rgba(94, 234, 212, 0.12);
+      user-select: none;
+      -webkit-user-select: none;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      transition: box-shadow 0.3s;
+      padding: 12px;
+      text-align: center;
+      touch-action: none;
+      will-change: transform;
+    }
+    .premium-popup.dragging {
+      cursor: grabbing;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.95);
+      transition: none;
+    }
+    .premium-popup:hover {
+      box-shadow: 0 25px 70px rgba(0,0,0,0.95), 0 0 60px rgba(94, 234, 212, 0.08);
+      border-color: rgba(94, 234, 212, 0.2);
+    }
+    .premium-popup .logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #5eead4, #38bdf8);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      color: #0a0c12;
+      box-shadow: 0 0 30px rgba(94, 234, 212, 0.25);
+      animation: glow 2.5s ease-in-out infinite alternate;
+      margin-bottom: 4px;
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+    @keyframes glow {
+      0% { box-shadow: 0 0 15px rgba(94, 234, 212, 0.15); }
+      100% { box-shadow: 0 0 40px rgba(94, 234, 212, 0.4); }
+    }
+    .premium-popup .brand-name {
+      font-size: 11px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #5eead4, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.06em;
+      line-height: 1.1;
+      pointer-events: none;
+    }
+    .premium-popup .brand-sub {
+      font-size: 6px;
+      color: #8993a4;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 1px;
+      pointer-events: none;
+    }
+    .premium-popup .click-hint {
+      font-size: 6px;
+      color: #5eead4;
+      opacity: 0.4;
+      margin-top: 3px;
+      animation: pulse-text 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes pulse-text {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 0.7; }
+    }
+
+    /* ---------- PREDICTION BAR ---------- */
+    .prediction-bar {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      background: rgba(18, 21, 31, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(94, 234, 212, 0.08);
+      border-radius: 14px;
+      padding: 6px 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      gap: 12px;
+      user-select: none;
+      -webkit-user-select: none;
+      min-height: 44px;
+      min-width: 160px;
+      cursor: default;
+      will-change: transform;
+    }
+
+    .bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .bar-logo {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, #5eead4, #38bdf8);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 10px;
+      color: #0a0c12;
+      box-shadow: 0 0 15px rgba(94, 234, 212, 0.15);
+      flex-shrink: 0;
+    }
+    .bar-name {
+      font-size: 11px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #5eead4, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+    }
+    .bar-name span {
+      font-weight: 300;
+      -webkit-text-fill-color: #8993a4;
+      font-size: 9px;
+    }
+
+    .bar-divider {
+      width: 1px;
+      height: 22px;
+      background: rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+
+    .bar-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      justify-content: center;
+    }
+    .bar-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0px;
+    }
+    .bar-item .label {
+      font-size: 6px;
+      color: #8993a4;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .bar-item .value {
+      font-size: 12px;
+      font-weight: 700;
+      color: #e8ecf1;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+    }
+    .bar-item .value.prediction {
+      font-size: 14px;
+      transition: color 0.3s;
+    }
+    .bar-item .value.prediction.big {
+      color: #5eead4;
+    }
+    .bar-item .value.prediction.small {
+      color: #fbbf24;
+    }
+    .bar-item .value.timer {
+      color: #fbbf24;
+      font-size: 14px;
+    }
+    .bar-item .value.timer.urgent {
+      color: #f87171;
+      animation: pulse 0.8s ease-in-out infinite alternate;
+    }
+    .bar-item .value.period {
+      color: #e8ecf1;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0.5; transform: scale(0.95); }
+    }
+
+    .bar-close {
+      background: none;
+      border: none;
+      color: #8993a4;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 2px 6px;
+      line-height: 1;
+      border-radius: 6px;
+      transition: 0.2s;
+      flex-shrink: 0;
+    }
+    .bar-close:hover { 
+      color: #f87171; 
+      background: rgba(248, 113, 113, 0.1);
+    }
+    .bar-close:focus-visible {
+      outline: 2px solid #5eead4;
+      outline-offset: 2px;
+    }
+
+    /* Balance Check Overlay */
+    .balance-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 20000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+    .balance-overlay.show {
+      display: flex;
+    }
+    .balance-box {
+      background: radial-gradient(circle at 30% 30%, #1e2338, #0f121c);
+      border: 2px solid rgba(248, 113, 113, 0.3);
+      border-radius: 20px;
+      padding: 30px 40px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+    }
+    .balance-box .icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .balance-box .title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f87171;
+      margin-bottom: 8px;
+    }
+    .balance-box .message {
+      font-size: 14px;
+      color: #8993a4;
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+    .balance-box .balance-amount {
+      font-size: 32px;
+      font-weight: 800;
+      color: #fbbf24;
+      margin: 10px 0;
+    }
+    .balance-box .min-amount {
+      font-size: 13px;
+      color: #5eead4;
+      margin-bottom: 16px;
+    }
+    .balance-box .close-btn {
+      background: linear-gradient(135deg, #5eead4, #38bdf8);
+      border: none;
+      color: #0a0c12;
+      padding: 10px 30px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .balance-box .close-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(94, 234, 212, 0.2);
+    }
+    .balance-box .close-btn:focus-visible {
+      outline: 2px solid #5eead4;
+      outline-offset: 2px;
+    }
+    .balance-box .deposit-btn {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      border: none;
+      color: #0a0c12;
+      padding: 10px 30px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-left: 10px;
+    }
+    .balance-box .deposit-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(251, 191, 36, 0.2);
+    }
+    .balance-box .deposit-btn:focus-visible {
+      outline: 2px solid #fbbf24;
+      outline-offset: 2px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .premium-popup {
+        width: 80px;
+        height: 80px;
+        bottom: 20px;
+        left: 20px;
+        padding: 10px;
+      }
+      .premium-popup .logo {
+        width: 26px;
+        height: 26px;
+        font-size: 12px;
+      }
+      .premium-popup .brand-name {
+        font-size: 9px;
+      }
+      .premium-popup .brand-sub {
+        font-size: 5px;
+      }
+      .premium-popup .click-hint {
+        font-size: 5px;
+      }
+      
+      .prediction-bar {
+        top: 8px;
+        padding: 4px 10px;
+        min-height: 38px;
+        min-width: 140px;
+        gap: 8px;
+        border-radius: 10px;
+      }
+      .bar-logo {
+        width: 18px;
+        height: 18px;
+        font-size: 8px;
+      }
+      .bar-name {
+        font-size: 9px;
+      }
+      .bar-name span {
+        font-size: 7px;
+      }
+      .bar-divider {
+        height: 18px;
+      }
+      .bar-content {
+        gap: 8px;
+      }
+      .bar-item .label {
+        font-size: 5px;
+      }
+      .bar-item .value {
+        font-size: 10px;
+      }
+      .bar-item .value.prediction {
+        font-size: 12px;
+      }
+      .bar-item .value.timer {
+        font-size: 12px;
+      }
+      .bar-item .value.period {
+        font-size: 9px;
+      }
+      .bar-close {
+        font-size: 11px;
+      }
+      
+      .balance-box {
+        padding: 20px 24px;
+      }
+      .balance-box .title {
+        font-size: 18px;
+      }
+      .balance-box .balance-amount {
+        font-size: 26px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .premium-popup {
+        width: 70px;
+        height: 70px;
+        bottom: 15px;
+        left: 15px;
+        padding: 8px;
+      }
+      .premium-popup .logo {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+      }
+      .premium-popup .brand-name {
+        font-size: 8px;
+      }
+      .prediction-bar {
+        padding: 4px 8px;
+        min-height: 34px;
+        min-width: 120px;
+        gap: 6px;
+      }
+      .bar-content {
+        gap: 6px;
+      }
+      .bar-item .value {
+        font-size: 9px;
+      }
+      .bar-item .value.prediction {
+        font-size: 10px;
+      }
+      .bar-item .value.timer {
+        font-size: 10px;
+      }
+      .bar-item .value.period {
+        font-size: 8px;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 500px) {
+      .premium-popup {
+        width: 70px;
+        height: 70px;
+        bottom: 15px;
+        left: 15px;
+        padding: 8px;
+      }
+      .premium-popup .logo {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+      }
+      .premium-popup .brand-name {
+        font-size: 8px;
+      }
+      .premium-popup .brand-sub {
+        font-size: 4px;
+      }
+      .premium-popup .click-hint {
+        font-size: 4px;
+      }
+      .prediction-bar {
+        top: 6px;
+        padding: 4px 10px;
+        min-height: 34px;
+        gap: 8px;
+      }
+      .bar-content {
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loadingScreen" role="status" aria-label="Loading">
+    <div class="loader"></div>
+    <div class="loader-text">Loading Maxx VIP...</div>
+  </div>
+
+  <div class="stage" id="stage">
+    <iframe class="site-frame" id="siteFrame" 
+      src="https://okwinslots4.com/#/register?invitationCode=283219142680"
+      title="Goagame - Wingo Prediction Platform"
+      referrerpolicy="no-referrer"
+      loading="eager"
+      aria-label="Goagame website"></iframe>
+
+    <!-- Movable Premium Popup -->
+    <div class="premium-popup" id="premiumPopup" role="button" tabindex="0" aria-label="Open prediction bar">
+      <div class="logo" aria-hidden="true">M</div>
+      <div class="brand-name">MAXX VIP</div>
+      <div class="brand-sub" aria-hidden="true">Wingo</div>
+      <div class="click-hint" aria-hidden="true">◆ tap ◆</div>
+    </div>
+
+    <!-- Prediction Bar -->
+    <div class="prediction-bar" id="predictionBar" role="complementary" aria-label="Prediction information">
+      <div class="bar-brand">
+        <div class="bar-logo" aria-hidden="true">M</div>
+        <div class="bar-name">MAXX <span>VIP</span></div>
+      </div>
+      <div class="bar-divider" aria-hidden="true"></div>
+      <div class="bar-content">
+        <div class="bar-item">
+          <span class="label">Prediction</span>
+          <span class="value prediction" id="barPrediction">Big</span>
+        </div>
+        <div class="bar-item">
+          <span class="label">Period</span>
+          <span class="value period" id="barPeriod">20260717100010950</span>
+        </div>
+        <div class="bar-item">
+          <span class="label">Time</span>
+          <span class="value timer" id="barTimer">: 22</span>
+        </div>
+      </div>
+      <button class="bar-close" id="barClose" aria-label="Close prediction bar">✕</button>
+    </div>
+
+    <!-- Balance Overlay -->
+    <div class="balance-overlay" id="balanceOverlay" role="dialog" aria-modal="true" aria-label="Insufficient balance">
+      <div class="balance-box">
+        <div class="icon" aria-hidden="true">🔒</div>
+        <div class="title">Insufficient Balance</div>
+        <div class="message">Your current balance is below the minimum required amount to access predictions.</div>
+        <div class="balance-amount" id="balanceDisplay">₹0</div>
+        <div class="min-amount">Minimum required: ₹300</div>
+        <div>
+          <button class="close-btn" id="balanceCloseBtn" aria-label="Close balance dialog">Close</button>
+          <button class="deposit-btn" id="depositBtn" aria-label="Go to deposit page">💰 Deposit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (() => {
+    'use strict';
+
+    // --- Constants ---
+    const SITE_URL = 'https://okwinslots4.com/#/register?invitationCode=283219142680';
+    const MIN_BALANCE = 300;
+    const UPDATE_INTERVAL = 1000;
+    const BALANCE_CHECK_INTERVAL = 2000;
+    const DRAG_CLICK_THRESHOLD = 200;
+
+    // --- DOM References (with null checks) ---
+    const $ = (id) => {
+      const el = document.getElementById(id);
+      if (!el) console.warn(`Element #${id} not found`);
+      return el;
+    };
+
+    const siteFrame = $('siteFrame');
+    const loadingScreen = $('loadingScreen');
+    const premiumPopup = $('premiumPopup');
+    const predictionBar = $('predictionBar');
+    const barClose = $('barClose');
+    const barPrediction = $('barPrediction');
+    const barPeriod = $('barPeriod');
+    const barTimer = $('barTimer');
+    const balanceOverlay = $('balanceOverlay');
+    const balanceDisplay = $('balanceDisplay');
+    const balanceCloseBtn = $('balanceCloseBtn');
+    const depositBtn = $('depositBtn');
+
+    // --- State ---
+    let currentPrediction = 'Big';
+    let prevRemaining = 0;
+    let timerId = null;
+    let balanceCheckId = null;
+    let isBarOpen = false;
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let dragStartTime = 0;
+    let isInitialized = false;
+
+    // --- Loading Screen ---
+    function hideLoading() {
+      if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => {
+          if (loadingScreen) loadingScreen.style.display = 'none';
+        }, 500);
+      }
+    }
+
+    // --- Error Handler ---
+    function handleError(context, error) {
+      console.error(`[Maxx VIP] ${context}:`, error);
+    }
+
+    // --- User Verification ---
+    function checkUserAndRedirect() {
+      try {
+        if (!siteFrame) return true;
+        try {
+          const iframeDoc = siteFrame.contentDocument;
+          if (!iframeDoc) return true;
+          
+          const userSelectors = ['.user-name', '.username', '.user-info', '.profile', '.avatar', '.logged-in', '.user-balance', '.wallet', '.account'];
+          let isLoggedIn = false;
+          
+          for (const selector of userSelectors) {
+            const elements = iframeDoc.querySelectorAll(selector);
+            if (elements.length > 0) {
+              isLoggedIn = true;
+              break;
+            }
+          }
+          
+          if (!isLoggedIn && !window.location.hash.includes('register')) {
+            window.location.href = SITE_URL;
+            return false;
+          }
+          return isLoggedIn;
+        } catch {
+          return true;
+        }
+      } catch (error) {
+        handleError('User verification', error);
+        return true;
+      }
+    }
+
+    // --- Balance Monitoring ---
+    function getRealBalance() {
+      try {
+        const selectors = [
+          '.balance', '.wallet-balance', '.user-balance', '.amount', 
+          '[data-balance]', '.wallet-amount', '.credit-amount', 
+          '.main-balance', '.available-balance', '.current-balance',
+          '#balance', '#wallet', '.money', '.coins', '.points'
+        ];
+        
+        // Search main document
+        for (const selector of selectors) {
+          const elements = document.querySelectorAll(selector);
+          for (const el of elements) {
+            const text = el.textContent.trim();
+            const match = text.match(/[₹$€£]?\s*([\d,]+\.?\d*)/);
+            if (match) {
+              const balance = parseFloat(match[1].replace(/,/g, ''));
+              if (!isNaN(balance) && balance > 0) return balance;
+            }
+          }
+        }
+        
+        // Search iframe
+        if (siteFrame && siteFrame.contentDocument) {
+          try {
+            const iframeDoc = siteFrame.contentDocument;
+            for (const selector of selectors) {
+              const elements = iframeDoc.querySelectorAll(selector);
+              for (const el of elements) {
+                const text = el.textContent.trim();
+                const match = text.match(/[₹$€£]?\s*([\d,]+\.?\d*)/);
+                if (match) {
+                  const balance = parseFloat(match[1].replace(/,/g, ''));
+         // --- Handle visibility change (pause/resume on tab switch) ---
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopTimer();
+  } else {
+    startTimer();
+    prevRemaining = getRemaining();
+  }
+});
+
+// --- Handle resize (keep popup in bounds) ---
+let resizeTimeout = null;
+window.addEventListener('resize', () => {
+  if (resizeTimeout) cancelAnimationFrame(resizeTimeout);
+  resizeTimeout = requestAnimationFrame(() => {
+    if (premiumPopup && !isDragging) {
+      const rect = premiumPopup.getBoundingClientRect();
+      const x = Math.min(rect.left, window.innerWidth - rect.width);
+      const y = Math.min(rect.top, window.innerHeight - rect.height);
+      if (x < rect.left || y < rect.top) {
+        premiumPopup.style.left = Math.max(0, x) + 'px';
+        premiumPopup.style.top = Math.max(0, y) + 'px';
+      }
+    }
+  });
+});
+
+// --- Start when DOM is ready ---
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+// --- Cleanup on page unload ---
+window.addEventListener('beforeunload', cleanup);
+
+// --- Expose API for debugging ---
+window.MAXX_VIP = {
+  getBalance: getRealBalance,
+  hasBalance: hasSufficientBalance,
+  openBar,
+  closeBar,
+  getPrediction: () => currentPrediction,
+  getPeriod: getPeriodNumber,
+  getRemaining,
+  version: '2.0'
+};
+
+})();
+</script>
+</body>
+</html>
