@@ -1,1007 +1,794 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Maxx VIP - AI Predictions</title>
-  <style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Maxx VIP AI · PredictX</title>
+    <style>
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif;
     }
 
-    html, body {
-      height: 100%;
-      width: 100%;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #0a0c12;
-      color: #e8ecf1;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .container {
-      height: 100vh;
-      width: 100vw;
-      position: relative;
+    body {
+      min-height: 100vh;
+      background: #0b0d12;
       overflow: hidden;
+      position: relative;
     }
 
-    /* Background Site */
-    .background-site {
-      position: absolute;
+    .bg-dashboard {
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: #0a0c12;
+      z-index: 0;
+      overflow: hidden;
+      background: #14181f;
+    }
+
+    .bg-dashboard iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      opacity: 0.85;
+      filter: blur(0px) brightness(0.9);
+      transform: scale(1.02);
+    }
+
+    .blur-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      backdrop-filter: blur(16px) saturate(1.6);
+      background: rgba(0, 0, 0, 0.35);
       z-index: 1;
-    }
-
-    .background-site iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
-    /* Overlay */
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(2px);
-      z-index: 100;
-      display: none;
-    }
-
-    .overlay.active {
-      display: block;
-    }
-
-    /* Auth Modal */
-    .auth-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: linear-gradient(135deg, #1a1f2e 0%, #0f1219 100%);
-      border: 2px solid rgba(255, 107, 107, 0.3);
-      border-radius: 24px;
-      padding: 40px;
-      max-width: 420px;
-      width: 90%;
-      z-index: 1000;
-      box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
-      animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translate(-50%, -40%);
-      }
-      to {
-        opacity: 1;
-        transform: translate(-50%, -50%);
-      }
-    }
-
-    .auth-modal.hidden {
-      display: none;
-    }
-
-    .auth-header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .auth-logo {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      margin: 0 auto 16px;
-      box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
-    }
-
-    .auth-header h2 {
-      font-size: 24px;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #ff6b6b, #ffd93d);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .auth-header p {
-      font-size: 13px;
-      color: #8993a4;
-    }
-
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-label {
-      font-size: 12px;
-      color: #8993a4;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .form-input {
-      padding: 14px;
-      border: 1px solid rgba(255, 107, 107, 0.2);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      color: #e8ecf1;
-      font-size: 14px;
-      transition: 0.3s;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: rgba(255, 107, 107, 0.6);
-      background: rgba(255, 255, 255, 0.12);
-      box-shadow: 0 0 20px rgba(255, 107, 107, 0.1);
-    }
-
-    .form-input::placeholder {
-      color: #5a6470;
-    }
-
-    .auth-btn {
-      padding: 14px;
-      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
-      border: none;
-      border-radius: 12px;
-      color: white;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      transition: 0.3s;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 8px;
-    }
-
-    .auth-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 40px rgba(255, 107, 107, 0.3);
-    }
-
-    .auth-btn:active {
-      transform: translateY(0);
-    }
-
-    .auth-message {
-      font-size: 12px;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 8px;
-      text-align: center;
-    }
-
-    .auth-message.error {
-      background: rgba(248, 113, 113, 0.1);
-      color: #f87171;
-      border: 1px solid rgba(248, 113, 113, 0.3);
-    }
-
-    .auth-message.success {
-      background: rgba(46, 204, 113, 0.1);
-      color: #2ecc71;
-      border: 1px solid rgba(46, 204, 113, 0.3);
-    }
-
-    /* Deposit Alert */
-    .deposit-alert {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: linear-gradient(135deg, #1a1f2e 0%, #0f1219 100%);
-      border: 2px solid rgba(248, 113, 113, 0.4);
-      border-radius: 24px;
-      padding: 40px;
-      max-width: 400px;
-      width: 90%;
-      z-index: 1001;
-      text-align: center;
-      box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
-      animation: slideUp 0.3s ease-out;
-    }
-
-    .deposit-alert.hidden {
-      display: none;
-    }
-
-    .deposit-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-      animation: bounce 2s infinite;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .deposit-alert h3 {
-      font-size: 22px;
-      margin-bottom: 12px;
-      color: #fbbf24;
-    }
-
-    .deposit-alert p {
-      font-size: 14px;
-      color: #8993a4;
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
-
-    .deposit-buttons {
-      display: flex;
-      gap: 12px;
-    }
-
-    .deposit-btn {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-      font-size: 13px;
-    }
-
-    .deposit-btn.cancel {
-      background: rgba(255, 255, 255, 0.1);
-      color: #8993a4;
-    }
-
-    .deposit-btn.cancel:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    .deposit-btn.go {
-      background: linear-gradient(135deg, #2ecc71, #27ae60);
-      color: white;
-    }
-
-    .deposit-btn.go:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(46, 204, 113, 0.3);
-    }
-
-    /* Prediction Popup */
-    .prediction-popup {
-      position: fixed;
-      bottom: 40px;
-      right: 40px;
-      z-index: 500;
-      opacity: 0;
       pointer-events: none;
-      transition: 0.3s;
+      opacity: 0;
+      transition: opacity 0.5s ease;
     }
 
-    .prediction-popup.show {
+    .blur-overlay.active {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .popup-circle {
-      width: 100px;
-      height: 100px;
-      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    /* Floating Circle Button - Movable */
+    .floating-btn {
+      position: fixed;
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
+      background: linear-gradient(135deg, #ff5a5f, #ff7b72);
+      box-shadow: 0 12px 40px rgba(255, 90, 95, 0.5), 0 0 0 4px rgba(255, 90, 95, 0.15);
+      z-index: 50;
+      cursor: grab;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 0 40px rgba(255, 107, 107, 0.5);
-      animation: pulse 2s infinite;
-      position: relative;
-      overflow: hidden;
+      color: white;
+      font-weight: 700;
+      user-select: none;
+      touch-action: none;
+      left: calc(50% - 34px);
+      top: calc(50% - 34px);
+      transition: none;
     }
 
-    @keyframes pulse {
-      0%, 100% {
-        box-shadow: 0 0 40px rgba(255, 107, 107, 0.5);
-        transform: scale(1);
-      }
-      50% {
-        box-shadow: 0 0 60px rgba(255, 107, 107, 0.7);
-        transform: scale(1.05);
-      }
+    .floating-btn:active {
+      cursor: grabbing;
     }
 
-    .popup-circle:hover {
-      animation: none;
-      box-shadow: 0 0 60px rgba(255, 107, 107, 0.8);
-      transform: scale(1.1);
-    }
-
-    .popup-icon {
-      font-size: 48px;
-      z-index: 2;
-    }
-
-    .popup-ring {
-      position: absolute;
-      inset: -10px;
-      border: 2px solid rgba(255, 107, 107, 0.3);
-      border-radius: 50%;
-      animation: spin 3s linear infinite;
-    }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    /* Prediction Modal */
-    .prediction-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: linear-gradient(135deg, #1a1f2e 0%, #0f1219 100%);
-      border: 2px solid rgba(255, 107, 107, 0.3);
-      border-radius: 24px;
-      padding: 40px;
-      max-width: 450px;
-      width: 90%;
-      z-index: 2000;
-      box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
-      animation: slideUp 0.3s ease-out;
-    }
-
-    .prediction-modal.hidden {
-      display: none;
-    }
-
-    .modal-header {
+    .floating-btn .btn-text {
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      line-height: 1.2;
       text-align: center;
-      margin-bottom: 32px;
+      pointer-events: none;
     }
 
-    .modal-header h2 {
-      font-size: 26px;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #ff6b6b, #ffd93d);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .floating-btn .pulse-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 90, 95, 0.2);
+      animation: ringPulse 2s infinite;
+      pointer-events: none;
     }
 
-    .modal-header p {
-      font-size: 13px;
-      color: #8993a4;
+    .floating-btn .pulse-ring:nth-child(2) {
+      animation-delay: 0.5s;
     }
 
-    .prediction-options {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    @keyframes ringPulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
     }
 
-    .prediction-btn {
-      padding: 24px;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #e8ecf1;
-      cursor: pointer;
-      transition: 0.3s;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .prediction-btn:hover {
-      border-color: rgba(255, 107, 107, 0.5);
-      background: rgba(255, 107, 107, 0.1);
-      transform: translateX(10px);
-    }
-
-    .prediction-btn.ai {
-      border-color: rgba(52, 152, 219, 0.3);
-    }
-
-    .prediction-btn.ai:hover {
-      border-color: rgba(52, 152, 219, 0.6);
-      background: rgba(52, 152, 219, 0.1);
-    }
-
-    .prediction-btn.vip {
-      border-color: rgba(155, 89, 182, 0.3);
-    }
-
-    .prediction-btn.vip:hover {
-      border-color: rgba(155, 89, 182, 0.6);
-      background: rgba(155, 89, 182, 0.1);
-    }
-
-    .prediction-icon {
-      font-size: 32px;
-    }
-
-    .prediction-text {
-      text-align: left;
-      flex: 1;
-    }
-
-    .prediction-title {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .prediction-subtitle {
-      font-size: 12px;
-      color: #8993a4;
-    }
-
-    .prediction-arrow {
-      font-size: 20px;
-      color: #8993a4;
-    }
-
-    /* AI Prediction Interface */
-    .ai-prediction {
+    /* Grid Selection Popup */
+    .grid-popup {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, #0a0c12 0%, #1a1f2e 100%);
-      z-index: 3000;
-      display: none;
-      flex-direction: column;
-      animation: fadeIn 0.3s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .ai-prediction.active {
       display: flex;
-    }
-
-    .ai-header {
-      background: linear-gradient(135deg, #3498db, #2980b9);
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 20px rgba(52, 152, 219, 0.2);
+      justify-content: center;
+      z-index: 60;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
     }
 
-    .ai-header h1 {
-      font-size: 20px;
-      color: white;
+    .grid-popup.active {
+      pointer-events: auto;
+      opacity: 1;
     }
 
-    .ai-close {
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 20px;
-      transition: 0.3s;
+    .grid-container {
+      background: rgba(20, 22, 30, 0.92);
+      backdrop-filter: blur(30px);
+      border-radius: 40px;
+      padding: 28px 24px 24px;
+      max-width: 360px;
+      width: 90%;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.8);
+      transform: scale(0.9) translateY(20px);
+      transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .ai-close:hover {
-      background: rgba(255, 255, 255, 0.3);
+    .grid-popup.active .grid-container {
+      transform: scale(1) translateY(0);
     }
 
-    .ai-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
+    .grid-title {
+      text-align: center;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .grid-title span {
+      background: linear-gradient(135deg, #ff5a5f, #ff7b72);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+
+    .grid-options {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
-    .ai-card {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(52, 152, 219, 0.2);
-      border-radius: 16px;
-      padding: 20px;
+    .grid-option {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 24px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
 
-    .ai-period {
-      text-align: center;
-      padding: 20px;
-      background: rgba(52, 152, 219, 0.15);
-      border-radius: 16px;
-      border-left: 4px solid #3498db;
+    .grid-option:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,90,95,0.2);
+      transform: translateX(4px);
     }
 
-    .ai-period-label {
-      font-size: 12px;
-      color: #8993a4;
-      margin-bottom: 8px;
+    .grid-option:active {
+      transform: scale(0.97);
     }
 
-    .ai-period-num {
-      font-size: 24px;
-      font-weight: 800;
-      color: #3498db;
-      font-family: 'Courier New', monospace;
+    .grid-option .option-icon {
+      font-size: 1.8rem;
+      flex-shrink: 0;
     }
 
-    .ai-timer {
-      text-align: center;
-      padding: 20px;
-      background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(46, 204, 113, 0.1));
-      border-radius: 16px;
+    .grid-option .option-content {
+      text-align: left;
+      flex: 1;
     }
 
-    .ai-timer-label {
-      font-size: 12px;
-      color: #8993a4;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+    .grid-option .option-title {
+      color: white;
+      font-weight: 600;
+      font-size: 0.95rem;
     }
 
-    .ai-timer-display {
-      font-size: 48px;
-      font-weight: 800;
-      color: #2ecc71;
-      font-variant-numeric: tabular-nums;
+    .grid-option .option-sub {
+      color: rgba(255,255,255,0.35);
+      font-size: 0.65rem;
+      letter-spacing: 0.3px;
     }
 
-    .ai-prediction-result {
-      background: rgba(46, 204, 113, 0.15);
-      border: 2px solid rgba(46, 204, 113, 0.3);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .ai-result-icon {
-      font-size: 40px;
-      margin-bottom: 12px;
-    }
-
-    .ai-result-text {
-      font-size: 20px;
+    .grid-option .option-badge {
+      background: linear-gradient(135deg, #ff5a5f, #ff7b72);
+      color: white;
+      font-size: 0.45rem;
       font-weight: 700;
-      color: #2ecc71;
-      margin-bottom: 8px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      flex-shrink: 0;
     }
 
-    .ai-result-confidence {
-      font-size: 14px;
-      color: #8993a4;
+    .grid-close {
+      display: block;
+      margin: 16px auto 0;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      padding: 8px 24px;
+      border-radius: 60px;
+      color: rgba(255,255,255,0.25);
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: 0.2s;
+      width: fit-content;
     }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
+    .grid-close:hover {
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.5);
     }
 
-    ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
+    /* AI Prediction Bar - Thin & Clean */
+    .prediction-bar {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120px);
+      z-index: 30;
+      background: rgba(16, 18, 24, 0.92);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 10px 18px;
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+      opacity: 0;
+      pointer-events: none;
+      max-width: 92%;
+      height: 48px;
     }
 
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 107, 107, 0.3);
-      border-radius: 10px;
+    .prediction-bar.active {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 107, 107, 0.5);
+    .prediction-bar .bar-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .prediction-bar .bar-divider {
+      width: 1px;
+      height: 22px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .prediction-bar .period-id {
+      color: rgba(255,255,255,0.3);
+      font-size: 0.55rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .prediction-bar .period-id span {
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
+    }
+
+    .prediction-bar .timer {
+      color: rgba(255,255,255,0.3);
+      font-size: 0.55rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .prediction-bar .timer span {
+      color: #ff7b72;
+      font-weight: 700;
+      font-feature-settings: 'tnum';
+    }
+
+    .prediction-bar .prediction-result {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prediction-bar .pred-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: white;
+      background: radial-gradient(circle at 30% 30%, #ff7b72, #e14b4b);
+      box-shadow: 0 2px 12px rgba(255, 90, 95, 0.3);
+      flex-shrink: 0;
+    }
+
+    .prediction-bar .pred-number.violet {
+      background: radial-gradient(circle at 30% 30%, #9b59b6, #8e44ad);
+      box-shadow: 0 2px 12px rgba(155, 89, 182, 0.3);
+    }
+
+    .prediction-bar .pred-number.green {
+      background: radial-gradient(circle at 30% 30%, #2ecc71, #27ae60);
+      box-shadow: 0 2px 12px rgba(46, 204, 113, 0.3);
+    }
+
+    .prediction-bar .pred-number.red {
+      background: radial-gradient(circle at 30% 30%, #ff7b72, #e14b4b);
+      box-shadow: 0 2px 12px rgba(255, 90, 95, 0.3);
+    }
+
+    .prediction-bar .pred-details {
+      display: flex;
+      flex-direction: row;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .prediction-bar .pred-details .size-badge {
+      font-size: 0.5rem;
+      font-weight: 600;
+      padding: 1px 8px;
+      border-radius: 12px;
+      background: rgba(0, 255, 200, 0.06);
+      border: 1px solid rgba(0, 255, 200, 0.1);
+      color: rgba(127, 255, 212, 0.7);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .prediction-bar .pred-details .size-badge.big {
+      background: rgba(255, 215, 0, 0.06);
+      border-color: rgba(255, 215, 0, 0.1);
+      color: rgba(255, 215, 0, 0.7);
+    }
+
+    .prediction-bar .pred-details .color-badge {
+      font-size: 0.5rem;
+      font-weight: 600;
+      padding: 1px 8px;
+      border-radius: 12px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .prediction-bar .pred-details .color-badge.red {
+      background: rgba(255, 90, 95, 0.08);
+      border: 1px solid rgba(255, 90, 95, 0.1);
+      color: rgba(255, 123, 114, 0.8);
+    }
+
+    .prediction-bar .pred-details .color-badge.green {
+      background: rgba(46, 204, 113, 0.08);
+      border: 1px solid rgba(46, 204, 113, 0.1);
+      color: rgba(46, 204, 113, 0.8);
+    }
+
+    .prediction-bar .pred-details .color-badge.violet {
+      background: rgba(155, 89, 182, 0.08);
+      border: 1px solid rgba(155, 89, 182, 0.1);
+      color: rgba(155, 89, 182, 0.8);
+    }
+
+    .prediction-bar .close-bar {
+      background: rgba(255,255,255,0.02);
+      border: none;
+      color: rgba(255,255,255,0.15);
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 2px 6px;
+      border-radius: 12px;
+      transition: 0.2s;
+      line-height: 1;
+    }
+
+    .prediction-bar .close-bar:hover {
+      color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.04);
     }
 
     @media (max-width: 480px) {
-      .auth-modal,
-      .deposit-alert,
-      .prediction-modal {
-        max-width: 95vw;
-        padding: 24px;
+      .floating-btn { width: 56px; height: 56px; }
+      .floating-btn .btn-text { font-size: 0.45rem; }
+      .grid-container { padding: 20px 16px 18px; }
+      .grid-option { padding: 14px 16px; }
+      .grid-option .option-icon { font-size: 1.4rem; }
+      .prediction-bar { 
+        padding: 8px 12px; 
+        height: 40px;
+        gap: 10px;
+        top: 10px;
       }
-
-      .prediction-popup {
-        bottom: 20px;
-        right: 20px;
-      }
-
-      .popup-circle {
-        width: 80px;
-        height: 80px;
-      }
-
-      .popup-icon {
-        font-size: 36px;
-      }
+      .prediction-bar .bar-divider { display: none; }
+      .prediction-bar .pred-number { width: 26px; height: 26px; font-size: 0.8rem; }
+      .prediction-bar .period-id { font-size: 0.45rem; }
+      .prediction-bar .timer { font-size: 0.45rem; }
+      .prediction-bar .pred-details .size-badge { font-size: 0.4rem; padding: 0 6px; }
+      .prediction-bar .pred-details .color-badge { font-size: 0.4rem; padding: 0 6px; }
     }
   </style>
 </head>
 <body>
+  <!-- Background -->
+<div class="bg-dashboard">
+  <iframe src="https://www.tsgame2026.net/#/register?invitationCode=788314987181" loading="lazy" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<div class="blur-overlay" id="blurOverlay"></div>
 
-  <!-- Background Site -->
-  <div class="container">
-    <div class="background-site">
-      <iframe src="https://okwinslots2.com/#/register?invitationCode=283219142680"></iframe>
-    </div>
+<!-- Floating Movable Circle Button -->
+<div class="floating-btn" id="floatingBtn">
+  <span class="pulse-ring"></span>
+  <span class="pulse-ring"></span>
+  <span class="btn-text">MAX<br>VIP</span>
+</div>
 
-    <!-- Overlay -->
-    <div class="overlay" id="overlay"></div>
-
-    <!-- Auth Modal -->
-    <div class="auth-modal" id="authModal">
-      <div class="auth-header">
-        <div class="auth-logo">💎</div>
-        <h2>Maxx VIP</h2>
-        <p>AI-Powered Predictions</p>
-      </div>
-      <div class="auth-form">
-        <div class="form-group">
-          <label class="form-label">Invitation Code</label>
-          <input type="text" class="form-input" id="inviteCodeInput" placeholder="Enter your code">
+<!-- Grid Selection Popup -->
+<div class="grid-popup" id="gridPopup">
+  <div class="grid-container">
+    <div class="grid-title">Choose <span>Prediction Mode</span></div>
+    <div class="grid-options">
+      <div class="grid-option" id="aiOption">
+        <span class="option-icon">🤖</span>
+        <div class="option-content">
+          <div class="option-title">AI PREDICTION</div>
+          <div class="option-sub">Smart algorithm • Real-time</div>
         </div>
-        <button class="auth-btn" id="authBtn">Verify & Enter</button>
-        <div class="auth-message" id="authMessage"></div>
+        <span class="option-badge">TOP</span>
       </div>
-    </div>
-
-    <!-- Deposit Alert -->
-    <div class="deposit-alert hidden" id="depositAlert">
-      <div class="deposit-icon">💰</div>
-      <h3>Deposit Required</h3>
-      <p>Make a deposit to unlock AI predictions and access real-time analysis</p>
-      <div class="deposit-buttons">
-        <button class="deposit-btn cancel" id="depositCancel">Later</button>
-        <button class="deposit-btn go" id="depositGo">Go to Deposit</button>
+      <div class="grid-option" id="vipOption">
+        <span class="option-icon">👑</span>
+        <div class="option-content">
+          <div class="option-title">VIP PREDICTION</div>
+          <div class="option-sub">Premium exclusive</div>
+        </div>
+        <span class="option-badge">BOTTOM</span>
       </div>
     </div>
+    <button class="grid-close" id="gridClose">✕ Close</button>
+  </div>
+</div>
 
-    <!-- Prediction Popup -->
-    <div class="prediction-popup" id="predictionPopup">
-      <div class="popup-circle" id="popupCircle">
-        <div class="popup-ring"></div>
-        <div class="popup-icon">💎</div>
-      </div>
-    </div>
-
-    <!-- Prediction Modal -->
-    <div class="prediction-modal hidden" id="predictionModal">
-      <div class="modal-header">
-        <h2>Choose Prediction Mode</h2>
-        <p>Select how you want to predict</p>
-      </div>
-      <div class="prediction-options">
-        <button class="prediction-btn ai" id="aiPredictionBtn">
-          <div class="prediction-icon">🤖</div>
-          <div class="prediction-text">
-            <div class="prediction-title">AI Prediction</div>
-            <div class="prediction-subtitle">Real-time AI analysis</div>
-          </div>
-          <div class="prediction-arrow">→</div>
-        </button>
-        <button class="prediction-btn vip" id="vipPredictionBtn">
-          <div class="prediction-icon">👑</div>
-          <div class="prediction-text">
-            <div class="prediction-title">VIP Prediction</div>
-            <div class="prediction-subtitle">Expert signals via Telegram</div>
-          </div>
-          <div class="prediction-arrow">→</div>
-        </button>
-      </div>
-    </div>
-
-    <!-- AI Prediction Interface -->
-    <div class="ai-prediction" id="aiPrediction">
-      <div class="ai-header">
-        <h1>🤖 AI Prediction Engine</h1>
-        <button class="ai-close" id="aiClose">✕</button>
-      </div>
-      <div class="ai-content">
-        <div class="ai-card">
-          <div class="ai-period">
-            <div class="ai-period-label">Current Period</div>
-            <div class="ai-period-num" id="aiPeriod">20260718000001</div>
-          </div>
-        </div>
-
-        <div class="ai-card">
-          <div class="ai-timer">
-            <div class="ai-timer-label">Time Remaining</div>
-            <div class="ai-timer-display" id="aiTimer">01:00</div>
-          </div>
-        </div>
-
-        <div class="ai-card">
-          <div class="ai-prediction-result">
-            <div class="ai-result-icon" id="aiResultIcon">📈</div>
-            <div class="ai-result-text" id="aiResultText">BIG</div>
-            <div class="ai-result-confidence">Confidence: <span id="aiConfidence">87</span>%</div>
-          </div>
-        </div>
-
-        <div class="ai-card">
-          <h3 style="color: #e8ecf1; margin-bottom: 12px; font-size: 14px;">📊 Analysis</h3>
-          <p style="font-size: 13px; color: #8993a4; line-height: 1.6;">
-            Current market shows strong upward momentum. Historical patterns indicate <strong style="color: #2ecc71;">BIG</strong> outcome with high probability. Risk level: <span style="color: #f59e0b;">MEDIUM</span>
-          </p>
-        </div>
-      </div>
+<!-- AI Prediction Bar - Thin & Clean -->
+<div class="prediction-bar" id="predictionBar">
+  <div class="bar-section">
+    <div class="period-id">Period <span id="barPeriodId">1847</span></div>
+    <div class="bar-divider"></div>
+    <div class="timer">⏱ <span id="barTimer">00:00</span></div>
+  </div>
+  <div class="bar-divider"></div>
+  <div class="prediction-result">
+    <div class="pred-number" id="barPredNumber">7</div>
+    <div class="pred-details">
+      <span class="size-badge" id="barSizeBadge">BIG</span>
+      <span class="color-badge red" id="barColorBadge">RED</span>
     </div>
   </div>
+  <button class="close-bar" id="closeBar">✕</button>
+</div>
 
-  <script>
-  (() => {
-    'use strict';
+<script>
+  (function() {
+    "use strict";
 
-    // Configuration
-    const INVITE_CODE = '283219142680';
-    const STORAGE_KEY = 'maxx_vip_auth';
-    const DEPOSIT_KEY = 'maxx_vip_deposit';
-    const PREDICTION_CYCLE = 60000; // 1 minute
+    // Elements
+    const floatingBtn = document.getElementById('floatingBtn');
+    const gridPopup = document.getElementById('gridPopup');
+    const gridClose = document.getElementById('gridClose');
+    const aiOption = document.getElementById('aiOption');
+    const vipOption = document.getElementById('vipOption');
+    const predictionBar = document.getElementById('predictionBar');
+    const barPeriodId = document.getElementById('barPeriodId');
+    const barTimer = document.getElementById('barTimer');
+    const barPredNumber = document.getElementById('barPredNumber');
+    const barSizeBadge = document.getElementById('barSizeBadge');
+    const barColorBadge = document.getElementById('barColorBadge');
+    const closeBar = document.getElementById('closeBar');
+    const blurOverlay = document.getElementById('blurOverlay');
 
-    // DOM Elements
-    const authModal = document.getElementById('authModal');
-    const inviteCodeInput = document.getElementById('inviteCodeInput');
-    const authBtn = document.getElementById('authBtn');
-    const authMessage = document.getElementById('authMessage');
-    const overlay = document.getElementById('overlay');
-    const depositAlert = document.getElementById('depositAlert');
-    const depositCancel = document.getElementById('depositCancel');
-    const depositGo = document.getElementById('depositGo');
-    const predictionPopup = document.getElementById('predictionPopup');
-    const popupCircle = document.getElementById('popupCircle');
-    const predictionModal = document.getElementById('predictionModal');
-    const aiPredictionBtn = document.getElementById('aiPredictionBtn');
-    const vipPredictionBtn = document.getElementById('vipPredictionBtn');
-    const aiPrediction = document.getElementById('aiPrediction');
-    const aiClose = document.getElementById('aiClose');
-    const aiTimer = document.getElementById('aiTimer');
-    const aiPeriod = document.getElementById('aiPeriod');
-    const aiResultIcon = document.getElementById('aiResultIcon');
-    const aiResultText = document.getElementById('aiResultText');
-    const aiConfidence = document.getElementById('aiConfidence');
+    let isBarOpen = false;
+    let countdownInterval = null;
+    let periodInterval = null;
+    let currentPrediction = { number: 7, size: 'BIG', color: 'RED' };
 
-    let isAuthenticated = false;
-    let hasDeposit = false;
-    let timerInterval = null;
-    let cycleStart = Date.now();
+    // ----- Floating Button Drag -----
+    let isDragging = false;
+    let dragStartX, dragStartY;
+    let hasMoved = false;
 
-    // Initialize
-    function init() {
-      checkAuth();
-      setupEventListeners();
-      monitorDeposit();
-    }
+    floatingBtn.addEventListener('mousedown', function(e) {
+      isDragging = true;
+      hasMoved = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      floatingBtn.style.cursor = 'grabbing';
+      floatingBtn.style.transition = 'none';
+      e.preventDefault();
+    });
 
-    // Auth Functions
-    function checkAuth() {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === INVITE_CODE) {
-        isAuthenticated = true;
-        authModal.classList.add('hidden');
-        overlay.classList.remove('active');
-        checkDeposit();
-      } else {
-        isAuthenticated = false;
-        authModal.classList.remove('hidden');
-        overlay.classList.add('active');
-      }
-    }
-
-    function verifyInviteCode() {
-      const code = inviteCodeInput.value.trim();
-      if (code === INVITE_CODE) {
-        localStorage.setItem(STORAGE_KEY, INVITE_CODE);
-        isAuthenticated = true;
-        authModal.classList.add('hidden');
-        overlay.classList.remove('active');
-        authMessage.textContent = '';
-        checkDeposit();
-      } else {
-        showMessage(authMessage, 'Invalid code', 'error');
-        inviteCodeInput.value = '';
-      }
-    }
-
-    function showMessage(element, text, type) {
-      element.textContent = text;
-      element.className = `auth-message ${type}`;
-    }
-
-    // Deposit Monitoring
-    function monitorDeposit() {
-      const bgFrame = document.querySelector('.background-site iframe');
-      if (!bgFrame || !bgFrame.contentDocument) {
-        setTimeout(monitorDeposit, 1000);
-        return;
-      }
-
-      try {
-        const doc = bgFrame.contentDocument;
-        const balanceSelectors = [
-          '.balance', '.wallet-balance', '.amount',
-          '[data-balance]', '.user-balance', '.current-balance'
-        ];
-
-        const checkBalance = () => {
-          let foundBalance = false;
-          for (const selector of balanceSelectors) {
-            const elements = doc.querySelectorAll(selector);
-            for (const el of elements) {
-              const text = el.textContent.trim();
-              const match = text.match(/[\d,]+\.?\d*/);
-              if (match) {
-                const balance = parseFloat(match[0].replace(/,/g, ''));
-                if (!isNaN(balance) && balance > 0) {
-                  hasDeposit = true;
-                  localStorage.setItem(DEPOSIT_KEY, 'true');
-                  foundBalance = true;
-                  break;
-                }
-              }
-            }
-            if (foundBalance) break;
-          }
-        };
-
-        checkBalance();
-        setInterval(checkBalance, 3000);
-      } catch (e) {
-        console.log('Monitor error:', e);
-        setTimeout(monitorDeposit, 2000);
-      }
-    }
-
-    function checkDeposit() {
-      hasDeposit = localStorage.getItem(DEPOSIT_KEY) === 'true';
-      if (!hasDeposit) {
-        depositAlert.classList.remove('hidden');
-        overlay.classList.add('active');
-      }
-    }
-
-    // Prediction Functions
-    function showPredictionPopup() {
-      if (isAuthenticated && hasDeposit) {
-        predictionPopup.classList.add('show');
-      }
-    }
-
-    function hidePredictionPopup() {
-      predictionPopup.classList.remove('show');
-    }
-
-    function showPredictionModal() {
-      predictionModal.classList.remove('hidden');
-      overlay.classList.add('active');
-    }
-
-    function hidePredictionModal() {
-      predictionModal.classList.add('hidden');
-      overlay.classList.remove('active');
-    }
-
-    function startAIPrediction() {
-      hidePredictionModal();
-      aiPrediction.classList.add('active');
-      startAITimer();
-      generateAIPrediction();
-    }
-
-    function startAITimer() {
-      cycleStart = Date.now();
-      if (timerInterval) clearInterval(timerInterval);
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
       
-      const updateTimer = () => {
-        const elapsed = (Date.now() - cycleStart) % PREDICTION_CYCLE;
-        const remaining = Math.floor((PREDICTION_CYCLE - elapsed) / 1000);
-        const mins = Math.floor(remaining / 60);
-        const secs = remaining % 60;
-        aiTimer.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-      };
-
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 100);
-    }
-
-    function generateAIPrediction() {
-      const predictions = [
-        { icon: '📈', text: 'BIG', confidence: 87 },
-        { icon: '📉', text: 'SMALL', confidence: 85 },
-        { icon: '🔴', text: 'RED', confidence: 92 },
-        { icon: '🟢', text: 'GREEN', confidence: 88 }
-      ];
-
-      const pred = predictions[Math.floor(Math.random() * predictions.length)];
-      aiResultIcon.textContent = pred.icon;
-      aiResultText.textContent = pred.text;
-      aiConfidence.textContent = pred.confidence;
-    }
-
-    function goToVIP() {
-      window.location.href = 'https://t.me/Earning_ranger';
-    }
-
-    // Event Listeners
-    function setupEventListeners() {
-      authBtn.addEventListener('click', verifyInviteCode);
-      inviteCodeInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') verifyInviteCode();
-      });
-
-      depositCancel.addEventListener('click', () => {
-        depositAlert.classList.add('hidden');
-        overlay.classList.remove('active');
-      });
-
-      depositGo.addEventListener('click', () => {
-        window.location.href = 'https://okwinslots2.com/#/wallet?invitationCode=283219142680';
-      });
-
-      popupCircle.addEventListener('click', showPredictionModal);
-
-      aiPredictionBtn.addEventListener('click', startAIPrediction);
-      vipPredictionBtn.addEventListener('click', goToVIP);
-
-      aiClose.addEventListener('click', () => {
-        aiPrediction.classList.remove('active');
-        if (timerInterval) clearInterval(timerInterval);
-        hidePredictionPopup();
-      });
-
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          if (!authModal.classList.contains('hidden')) return;
-          if (!depositAlert.classList.contains('hidden')) return;
-          hidePredictionModal();
-        }
-      });
-    }
-
-    // Start
-    init();
-    showPredictionPopup();
-
-    // Expose API
-    window.MAXX = {
-      isAuth: () => isAuthenticated,
-      hasDeposit: () => hasDeposit,
-      logout: () => {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(DEPOSIT_KEY);
-        location.reload();
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        hasMoved = true;
       }
-    };
+      
+      const rect = floatingBtn.getBoundingClientRect();
+      let x = e.clientX - rect.width / 2;
+      let y = e.clientY - rect.height / 2;
+      
+      const maxX = window.innerWidth - rect.width;
+      const maxY = window.innerHeight - rect.height;
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+      
+      floatingBtn.style.left = x + 'px';
+      floatingBtn.style.top = y + 'px';
+      floatingBtn.style.right = 'auto';
+      floatingBtn.style.bottom = 'auto';
+    });
 
+    document.addEventListener('mouseup', function(e) {
+      if (isDragging) {
+        isDragging = false;
+        floatingBtn.style.cursor = 'grab';
+        floatingBtn.style.transition = 'none';
+        
+        if (!hasMoved) {
+          openGrid();
+        }
+        hasMoved = false;
+      }
+    });
+
+    // Touch events
+    let touchStartX, touchStartY;
+    let touchHasMoved = false;
+
+    floatingBtn.addEventListener('touchstart', function(e) {
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchHasMoved = false;
+      isDragging = true;
+    }, { passive: true });
+
+    floatingBtn.addEventListener('touchmove', function(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+      
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        touchHasMoved = true;
+      }
+      
+      const rect = floatingBtn.getBoundingClientRect();
+      let x = touch.clientX - rect.width / 2;
+      let y = touch.clientY - rect.height / 2;
+      
+      const maxX = window.innerWidth - rect.width;
+      const maxY = window.innerHeight - rect.height;
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+      
+      floatingBtn.style.left = x + 'px';
+      floatingBtn.style.top = y + 'px';
+      floatingBtn.style.right = 'auto';
+      floatingBtn.style.bottom = 'auto';
+    }, { passive: false });
+
+    floatingBtn.addEventListener('touchend', function(e) {
+      if (isDragging) {
+        isDragging = false;
+        if (!touchHasMoved) {
+          openGrid();
+        }
+        touchHasMoved = false;
+      }
+    }, { passive: true });
+
+    // ----- RNG Prediction Generator -----
+    function generateRNGPrediction() {
+      const number = Math.floor(Math.random() * 10);
+      let size, color, colorClass;
+      
+      if (number >= 0 && number <= 4) {
+        size = 'SMALL';
+      } else {
+        size = 'BIG';
+      }
+      
+      if (number === 0 || number === 5) {
+        color = 'VIOLET';
+        colorClass = 'violet';
+      } else if (number % 2 === 0) {
+        color = 'RED';
+        colorClass = 'red';
+      } else {
+        color = 'GREEN';
+        colorClass = 'green';
+      }
+      
+      return { number, size, color, colorClass };
+    }
+
+    // ----- Get Period ID from Real Clock (YYMMDD10 format) -----
+    function getPeriodId() {
+      const now = new Date();
+      const year = String(now.getFullYear()).slice(2);
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return year + month + day + hours + minutes;
+    }
+
+    // ----- Update Prediction Bar -----
+    function updatePredictionBar(prediction) {
+      currentPrediction = prediction;
+      barPredNumber.textContent = prediction.number;
+      barPredNumber.className = 'pred-number';
+      if (prediction.colorClass) {
+        barPredNumber.classList.add(prediction.colorClass);
+      }
+      
+      barSizeBadge.textContent = prediction.size;
+      if (prediction.size === 'BIG') {
+        barSizeBadge.className = 'size-badge big';
+      } else {
+        barSizeBadge.className = 'size-badge';
+      }
+      
+      barColorBadge.textContent = prediction.color;
+      barColorBadge.className = 'color-badge ' + prediction.colorClass;
+      
+      barPeriodId.textContent = getPeriodId();
+    }
+
+    // ----- Update Timer (Countdown to next minute) -----
+    function updateTimer() {
+      const now = new Date();
+      const seconds = now.getSeconds();
+      const milliseconds = now.getMilliseconds();
+      const remaining = 60 - seconds - (milliseconds / 1000);
+      const mins = Math.floor(remaining / 60);
+      const secs = Math.floor(remaining % 60);
+      barTimer.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      
+      if (remaining < 0.5) {
+        const newPred = generateRNGPrediction();
+        updatePredictionBar(newPred);
+      }
+    }
+
+    // ----- Grid Popup -----
+    function openGrid() {
+      gridPopup.classList.add('active');
+      blurOverlay.classList.add('active');
+    }
+
+    function closeGrid() {
+      gridPopup.classList.remove('active');
+      blurOverlay.classList.remove('active');
+    }
+
+    // ----- Open AI Prediction Bar (Clean) -----
+    function openAIBar() {
+      // Close grid and remove blur immediately
+      closeGrid();
+      blurOverlay.classList.remove('active');
+      
+      // Show bar
+      isBarOpen = true;
+      predictionBar.classList.add('active');
+      
+      // Generate initial prediction
+      const pred = generateRNGPrediction();
+      updatePredictionBar(pred);
+      
+      // Start timer updates
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(updateTimer, 100);
+      
+      // Update period every minute
+      if (periodInterval) clearInterval(periodInterval);
+      periodInterval = setInterval(() => {
+        barPeriodId.textContent = getPeriodId();
+      }, 60000);
+      
+      updateTimer();
+    }
+
+    function closeBarFn() {
+      isBarOpen = false;
+      predictionBar.classList.remove('active');
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      if (periodInterval) {
+        clearInterval(periodInterval);
+        periodInterval = null;
+      }
+    }
+
+    // ----- VIP Prediction (Just close grid) -----
+    function openVipComingSoon() {
+      closeGrid();
+    }
+
+    // ----- Grid Event Listeners -----
+    gridClose.addEventListener('click', closeGrid);
+
+    aiOption.addEventListener('click', function(e) {
+      e.stopPropagation();
+      openAIBar();
+    });
+
+    vipOption.addEventListener('click', function(e) {
+      e.stopPropagation();
+      openVipComingSoon();
+    });
+
+    // Click outside to close grid
+    gridPopup.addEventListener('click', function(e) {
+      if (e.target === gridPopup) closeGrid();
+    });
+
+    // Close bar button
+    closeBar.addEventListener('click', closeBarFn);
+
+    // Initial state
+    gridPopup.classList.remove('active');
+    predictionBar.classList.remove('active');
+    blurOverlay.classList.remove('active');
+
+    // Set initial timer
+    updateTimer();
+
+    console.log('Maxx VIP AI - Prediction Engine Active');
+    console.log('Rules: 0-4=Small, 5-9=Big, Even=Red, Odd=Green, 0&5=Violet');
+    console.log('Period format: YYMMDDHHMM (changes every minute)');
   })();
-  </script>
+</script>
 </body>
 </html>
