@@ -1,794 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>Maxx VIP AI · PredictX</title>
-    <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif;
-    }
-
-    body {
-      min-height: 100vh;
-      background: #0b0d12;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .bg-dashboard {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      overflow: hidden;
-      background: #14181f;
-    }
-
-    .bg-dashboard iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      opacity: 0.85;
-      filter: blur(0px) brightness(0.9);
-      transform: scale(1.02);
-    }
-
-    .blur-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      backdrop-filter: blur(16px) saturate(1.6);
-      background: rgba(0, 0, 0, 0.35);
-      z-index: 1;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    .blur-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* Floating Circle Button - Movable */
-    .floating-btn {
-      position: fixed;
-      width: 68px;
-      height: 68px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ff5a5f, #ff7b72);
-      box-shadow: 0 12px 40px rgba(255, 90, 95, 0.5), 0 0 0 4px rgba(255, 90, 95, 0.15);
-      z-index: 50;
-      cursor: grab;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      user-select: none;
-      touch-action: none;
-      left: calc(50% - 34px);
-      top: calc(50% - 34px);
-      transition: none;
-    }
-
-    .floating-btn:active {
-      cursor: grabbing;
-    }
-
-    .floating-btn .btn-text {
-      font-size: 0.55rem;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      line-height: 1.2;
-      text-align: center;
-      pointer-events: none;
-    }
-
-    .floating-btn .pulse-ring {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 90, 95, 0.2);
-      animation: ringPulse 2s infinite;
-      pointer-events: none;
-    }
-
-    .floating-btn .pulse-ring:nth-child(2) {
-      animation-delay: 0.5s;
-    }
-
-    @keyframes ringPulse {
-      0% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(1.6); opacity: 0; }
-    }
-
-    /* Grid Selection Popup */
-    .grid-popup {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 60;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
-
-    .grid-popup.active {
-      pointer-events: auto;
-      opacity: 1;
-    }
-
-    .grid-container {
-      background: rgba(20, 22, 30, 0.92);
-      backdrop-filter: blur(30px);
-      border-radius: 40px;
-      padding: 28px 24px 24px;
-      max-width: 360px;
-      width: 90%;
-      border: 1px solid rgba(255,255,255,0.06);
-      box-shadow: 0 40px 80px rgba(0,0,0,0.8);
-      transform: scale(0.9) translateY(20px);
-      transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .grid-popup.active .grid-container {
-      transform: scale(1) translateY(0);
-    }
-
-    .grid-title {
-      text-align: center;
-      color: rgba(255,255,255,0.6);
-      font-size: 0.95rem;
-      font-weight: 500;
-      margin-bottom: 20px;
-      letter-spacing: 0.5px;
-    }
-
-    .grid-title span {
-      background: linear-gradient(135deg, #ff5a5f, #ff7b72);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 700;
-    }
-
-    .grid-options {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .grid-option {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 24px;
-      padding: 16px 20px;
-      cursor: pointer;
-      transition: 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .grid-option:hover {
-      background: rgba(255,255,255,0.06);
-      border-color: rgba(255,90,95,0.2);
-      transform: translateX(4px);
-    }
-
-    .grid-option:active {
-      transform: scale(0.97);
-    }
-
-    .grid-option .option-icon {
-      font-size: 1.8rem;
-      flex-shrink: 0;
-    }
-
-    .grid-option .option-content {
-      text-align: left;
-      flex: 1;
-    }
-
-    .grid-option .option-title {
-      color: white;
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .grid-option .option-sub {
-      color: rgba(255,255,255,0.35);
-      font-size: 0.65rem;
-      letter-spacing: 0.3px;
-    }
-
-    .grid-option .option-badge {
-      background: linear-gradient(135deg, #ff5a5f, #ff7b72);
-      color: white;
-      font-size: 0.45rem;
-      font-weight: 700;
-      padding: 2px 10px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      flex-shrink: 0;
-    }
-
-    .grid-close {
-      display: block;
-      margin: 16px auto 0;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.05);
-      padding: 8px 24px;
-      border-radius: 60px;
-      color: rgba(255,255,255,0.25);
-      cursor: pointer;
-      font-size: 0.75rem;
-      transition: 0.2s;
-      width: fit-content;
-    }
-
-    .grid-close:hover {
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.5);
-    }
-
-    /* AI Prediction Bar - Thin & Clean */
-    .prediction-bar {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-120px);
-      z-index: 30;
-      background: rgba(16, 18, 24, 0.92);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      padding: 10px 18px;
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
-      opacity: 0;
-      pointer-events: none;
-      max-width: 92%;
-      height: 48px;
-    }
-
-    .prediction-bar.active {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .prediction-bar .bar-section {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .prediction-bar .bar-divider {
-      width: 1px;
-      height: 22px;
-      background: rgba(255,255,255,0.04);
-    }
-
-    .prediction-bar .period-id {
-      color: rgba(255,255,255,0.3);
-      font-size: 0.55rem;
-      font-weight: 500;
-      letter-spacing: 0.3px;
-      white-space: nowrap;
-    }
-
-    .prediction-bar .period-id span {
-      color: rgba(255,255,255,0.7);
-      font-weight: 600;
-    }
-
-    .prediction-bar .timer {
-      color: rgba(255,255,255,0.3);
-      font-size: 0.55rem;
-      font-weight: 500;
-      letter-spacing: 0.3px;
-      white-space: nowrap;
-    }
-
-    .prediction-bar .timer span {
-      color: #ff7b72;
-      font-weight: 700;
-      font-feature-settings: 'tnum';
-    }
-
-    .prediction-bar .prediction-result {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .prediction-bar .pred-number {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: white;
-      background: radial-gradient(circle at 30% 30%, #ff7b72, #e14b4b);
-      box-shadow: 0 2px 12px rgba(255, 90, 95, 0.3);
-      flex-shrink: 0;
-    }
-
-    .prediction-bar .pred-number.violet {
-      background: radial-gradient(circle at 30% 30%, #9b59b6, #8e44ad);
-      box-shadow: 0 2px 12px rgba(155, 89, 182, 0.3);
-    }
-
-    .prediction-bar .pred-number.green {
-      background: radial-gradient(circle at 30% 30%, #2ecc71, #27ae60);
-      box-shadow: 0 2px 12px rgba(46, 204, 113, 0.3);
-    }
-
-    .prediction-bar .pred-number.red {
-      background: radial-gradient(circle at 30% 30%, #ff7b72, #e14b4b);
-      box-shadow: 0 2px 12px rgba(255, 90, 95, 0.3);
-    }
-
-    .prediction-bar .pred-details {
-      display: flex;
-      flex-direction: row;
-      gap: 4px;
-      align-items: center;
-    }
-
-    .prediction-bar .pred-details .size-badge {
-      font-size: 0.5rem;
-      font-weight: 600;
-      padding: 1px 8px;
-      border-radius: 12px;
-      background: rgba(0, 255, 200, 0.06);
-      border: 1px solid rgba(0, 255, 200, 0.1);
-      color: rgba(127, 255, 212, 0.7);
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .prediction-bar .pred-details .size-badge.big {
-      background: rgba(255, 215, 0, 0.06);
-      border-color: rgba(255, 215, 0, 0.1);
-      color: rgba(255, 215, 0, 0.7);
-    }
-
-    .prediction-bar .pred-details .color-badge {
-      font-size: 0.5rem;
-      font-weight: 600;
-      padding: 1px 8px;
-      border-radius: 12px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .prediction-bar .pred-details .color-badge.red {
-      background: rgba(255, 90, 95, 0.08);
-      border: 1px solid rgba(255, 90, 95, 0.1);
-      color: rgba(255, 123, 114, 0.8);
-    }
-
-    .prediction-bar .pred-details .color-badge.green {
-      background: rgba(46, 204, 113, 0.08);
-      border: 1px solid rgba(46, 204, 113, 0.1);
-      color: rgba(46, 204, 113, 0.8);
-    }
-
-    .prediction-bar .pred-details .color-badge.violet {
-      background: rgba(155, 89, 182, 0.08);
-      border: 1px solid rgba(155, 89, 182, 0.1);
-      color: rgba(155, 89, 182, 0.8);
-    }
-
-    .prediction-bar .close-bar {
-      background: rgba(255,255,255,0.02);
-      border: none;
-      color: rgba(255,255,255,0.15);
-      cursor: pointer;
-      font-size: 0.8rem;
-      padding: 2px 6px;
-      border-radius: 12px;
-      transition: 0.2s;
-      line-height: 1;
-    }
-
-    .prediction-bar .close-bar:hover {
-      color: rgba(255,255,255,0.4);
-      background: rgba(255,255,255,0.04);
-    }
-
-    @media (max-width: 480px) {
-      .floating-btn { width: 56px; height: 56px; }
-      .floating-btn .btn-text { font-size: 0.45rem; }
-      .grid-container { padding: 20px 16px 18px; }
-      .grid-option { padding: 14px 16px; }
-      .grid-option .option-icon { font-size: 1.4rem; }
-      .prediction-bar { 
-        padding: 8px 12px; 
-        height: 40px;
-        gap: 10px;
-        top: 10px;
-      }
-      .prediction-bar .bar-divider { display: none; }
-      .prediction-bar .pred-number { width: 26px; height: 26px; font-size: 0.8rem; }
-      .prediction-bar .period-id { font-size: 0.45rem; }
-      .prediction-bar .timer { font-size: 0.45rem; }
-      .prediction-bar .pred-details .size-badge { font-size: 0.4rem; padding: 0 6px; }
-      .prediction-bar .pred-details .color-badge { font-size: 0.4rem; padding: 0 6px; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#facc15">
+    <title>K9BETS - WinGo</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Background -->
-<div class="bg-dashboard">
-  <iframe src="https://www.tsgame2026.net/#/register?invitationCode=788314987181" loading="lazy" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
-<div class="blur-overlay" id="blurOverlay"></div>
-
-<!-- Floating Movable Circle Button -->
-<div class="floating-btn" id="floatingBtn">
-  <span class="pulse-ring"></span>
-  <span class="pulse-ring"></span>
-  <span class="btn-text">MAX<br>VIP</span>
-</div>
-
-<!-- Grid Selection Popup -->
-<div class="grid-popup" id="gridPopup">
-  <div class="grid-container">
-    <div class="grid-title">Choose <span>Prediction Mode</span></div>
-    <div class="grid-options">
-      <div class="grid-option" id="aiOption">
-        <span class="option-icon">🤖</span>
-        <div class="option-content">
-          <div class="option-title">AI PREDICTION</div>
-          <div class="option-sub">Smart algorithm • Real-time</div>
+    <div id="app">
+        <!-- Brand Header -->
+        <div class="brand-header">
+            <h1>K9BETS</h1>
+            <div class="sub">⚡ WIN BIG · PLAY SMART ⚡</div>
         </div>
-        <span class="option-badge">TOP</span>
-      </div>
-      <div class="grid-option" id="vipOption">
-        <span class="option-icon">👑</span>
-        <div class="option-content">
-          <div class="option-title">VIP PREDICTION</div>
-          <div class="option-sub">Premium exclusive</div>
+
+        <!-- Auth Container -->
+        <div class="auth-container active" id="authContainer">
+            <h2 id="authTitle">Welcome Back</h2>
+            <div class="auth-error" id="authError"></div>
+            <input type="text" id="authUserId" placeholder="User ID / Phone" value="9676138055" autocomplete="username">
+            <input type="password" id="authPassword" placeholder="Password" value="9676138055" autocomplete="current-password">
+            <div class="referral-info" id="referralInfo" style="display:none;">
+                <i class="fas fa-gift"></i> 
+                <strong>Referral Bonus:</strong> Enter code for <strong>₹50</strong> free!
+                <input type="text" id="referralCode" placeholder="Referral Code (optional)">
+            </div>
+            <button class="auth-btn" id="authSubmitBtn">Login</button>
+            <div class="auth-switch">
+                <span id="authSwitchText">Don't have an account? <span id="authToggle">Register</span></span>
+            </div>
         </div>
-        <span class="option-badge">BOTTOM</span>
-      </div>
+
+        <!-- Game UI -->
+        <div class="game-ui" id="gameUI">
+            <!-- Wallet -->
+            <div class="wallet-bar">
+                <div class="wallet-balance">
+                    <i class="fas fa-wallet"></i> ₹<span id="balanceDisplay">0.00</span>
+                </div>
+                <div class="user-info">
+                    <span id="userDisplay">User</span>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
+                </div>
+                <div class="wallet-actions">
+                    <button class="deposit-btn" id="depositBtn"><i class="fas fa-plus-circle"></i> Deposit</button>
+                    <button id="withdrawBtn"><i class="fas fa-arrow-up-right-from-square"></i> Withdraw</button>
+                </div>
+            </div>
+
+            <!-- Welcome -->
+            <div class="welcome-msg">
+                <i class="fas fa-star"></i> Thank you for being a member of the K9BETS platform.
+            </div>
+
+            <!-- Game Modes -->
+            <div class="game-modes">
+                <div class="game-mode-btn active"><i class="fas fa-bolt"></i> WinGo 30sec</div>
+                <div class="game-mode-btn"><i class="fas fa-clock"></i> WinGo 1 Min</div>
+                <div class="game-mode-btn"><i class="fas fa-clock"></i> WinGo 3 Min</div>
+                <div class="game-mode-btn"><i class="fas fa-clock"></i> WinGo 5 Min</div>
+            </div>
+
+            <!-- Timer -->
+            <div class="time-remaining">
+                <span class="time-label"><i class="far fa-hourglass"></i> Time remaining</span>
+                <span class="time-value" id="timerDisplay">0:01:11</span>
+                <span class="period-id" id="periodDisplay">20260719100052333</span>
+            </div>
+
+            <!-- Color Pick -->
+            <div class="color-pick">
+                <div class="color-option green selected" data-color="green" data-bigsmall="Big">
+                    <span>G</span>
+                    <span class="small-label">Big</span>
+                </div>
+                <div class="color-option violet" data-color="violet" data-bigsmall="Small">
+                    <span>V</span>
+                    <span class="small-label">Small</span>
+                </div>
+                <div class="color-option red" data-color="red" data-bigsmall="Big">
+                    <span>R</span>
+                    <span class="small-label">Big</span>
+                </div>
+            </div>
+
+            <!-- Multipliers -->
+            <div class="bet-multipliers">
+                <span class="multiplier active" data-mult="1">×1</span>
+                <span class="multiplier" data-mult="5">×5</span>
+                <span class="multiplier" data-mult="10">×10</span>
+                <span class="multiplier" data-mult="20">×20</span>
+                <span class="multiplier" data-mult="50">×50</span>
+                <span class="multiplier" data-mult="100">×100</span>
+            </div>
+
+            <!-- Big/Small -->
+            <div class="big-small-row">
+                <div class="big-small-btn big active" data-bigsmall="Big">Big</div>
+                <div class="big-small-btn small" data-bigsmall="Small">Small</div>
+            </div>
+
+            <!-- Bet Amount -->
+            <div class="bet-amount-section">
+                <div class="bet-amount-label"><i class="fas fa-coins"></i> Bet Amount</div>
+                <div class="bet-amount-input">
+                    <input type="number" id="betAmount" value="1.00" step="0.50" min="0.50">
+                    <button id="placeBetBtn" class="place-bet-btn"><i class="fas fa-play"></i> Place Bet</button>
+                </div>
+                <div class="quick-bet-amounts">
+                    <span class="quick-bet" data-amount="0.50">₹0.50</span>
+                    <span class="quick-bet" data-amount="1.00">₹1</span>
+                    <span class="quick-bet" data-amount="5.00">₹5</span>
+                    <span class="quick-bet" data-amount="10.00">₹10</span>
+                    <span class="quick-bet" data-amount="25.00">₹25</span>
+                    <span class="quick-bet" data-amount="50.00">₹50</span>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-section">
+                <div class="stat-card"><div class="stat-label">Total Bets</div><div class="stat-value" id="totalBets">0</div></div>
+                <div class="stat-card"><div class="stat-label">Wins</div><div class="stat-value" id="totalWins">0</div></div>
+                <div class="stat-card"><div class="stat-label">Losses</div><div class="stat-value" id="totalLosses">0</div></div>
+                <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="winRate">0%</div></div>
+            </div>
+
+            <!-- History -->
+            <div class="history-section">
+                <div class="history-tabs">
+                    <span class="active-tab">Game history</span>
+                    <span>Chart</span>
+                    <span>Follow Strategy</span>
+                </div>
+                <table class="history-table">
+                    <thead><tr><th>Period</th><th>Number</th><th>Big Small</th><th>Color</th></tr></thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+                <div class="pagination">
+                    <i class="fas fa-chevron-left" id="prevPage"></i> 
+                    <span id="currentPage">1</span>/<span id="totalPages">50</span> 
+                    <i class="fas fa-chevron-right" id="nextPage"></i>
+                </div>
+            </div>
+
+            <!-- Admin -->
+            <button class="toggle-admin" id="toggleAdminBtn"><i class="fas fa-lock"></i> Admin Panel</button>
+            
+            <div class="admin-panel" id="adminPanel">
+                <div class="admin-title">
+                    <span><i class="fas fa-user-cog"></i> Admin Control</span>
+                    <i class="fas fa-times" id="closeAdmin"></i>
+                </div>
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <h4>Set Balance</h4>
+                        <input type="number" id="adminBalanceInput" placeholder="Amount" step="0.01">
+                        <button id="setBalanceBtn">Update</button>
+                    </div>
+                    <div class="admin-card">
+                        <h4>Payment UPI</h4>
+                        <input type="text" id="adminUPI" placeholder="UPI ID">
+                        <button id="setUPIBtn">Update UPI</button>
+                    </div>
+                    <div class="admin-card">
+                        <h4>Add History</h4>
+                        <input type="text" id="adminPeriod" placeholder="Period">
+                        <input type="number" id="adminNumber" placeholder="Number (0-9)">
+                        <select id="adminBigSmall">
+                            <option value="Big">Big</option>
+                            <option value="Small">Small</option>
+                        </select>
+                        <button id="addHistoryBtn">Add</button>
+                    </div>
+                    <div class="admin-card">
+                        <h4>Simulate Round</h4>
+                        <button id="simulateRoundBtn">Simulate</button>
+                        <button class="danger-btn" id="resetHistoryBtn" style="margin-top:8px;">Reset History</button>
+                    </div>
+                </div>
+                <button id="resetAllDataBtn" class="danger-btn" style="width:100%; margin-top:10px;">
+                    <i class="fas fa-exclamation-triangle"></i> Reset All Data
+                </button>
+            </div>
+
+            <!-- Activity -->
+            <div class="recent-activity">
+                <div class="activity-header">
+                    <i class="fas fa-history"></i> Recent Activity
+                    <span id="activityCount">0</span>
+                </div>
+                <div class="activity-list" id="activityList">
+                    <div class="activity-item">No recent activity</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div class="modal" id="depositModal">
+            <div class="modal-content">
+                <span class="modal-close" id="closeDeposit">&times;</span>
+                <h3><i class="fas fa-plus-circle"></i> Deposit</h3>
+                <div class="modal-body">
+                    <p class="modal-desc">Add funds to your wallet</p>
+                    <p class="upi-info">UPI: <span id="upiDisplay">k9bets@upi</span></p>
+                    <input type="number" id="depositAmount" placeholder="Enter amount (₹)" step="0.01" min="1">
+                    <div class="quick-amounts">
+                        <span class="quick-amount" data-amount="100">₹100</span>
+                        <span class="quick-amount" data-amount="500">₹500</span>
+                        <span class="quick-amount" data-amount="1000">₹1000</span>
+                        <span class="quick-amount" data-amount="5000">₹5000</span>
+                    </div>
+                    <button id="confirmDeposit" class="confirm-btn">Deposit</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="withdrawModal">
+            <div class="modal-content">
+                <span class="modal-close" id="closeWithdraw">&times;</span>
+                <h3><i class="fas fa-arrow-up-right-from-square"></i> Withdraw</h3>
+                <div class="modal-body">
+                    <p class="modal-desc">Withdraw funds from your wallet</p>
+                    <p class="balance-info">Available: ₹<span id="withdrawBalance">0.00</span></p>
+                    <input type="number" id="withdrawAmount" placeholder="Enter amount (₹)" step="0.01" min="1">
+                    <div class="quick-amounts">
+                        <span class="quick-amount" data-amount="50">₹50</span>
+                        <span class="quick-amount" data-amount="100">₹100</span>
+                        <span class="quick-amount" data-amount="500">₹500</span>
+                        <span class="quick-amount" data-amount="1000">₹1000</span>
+                    </div>
+                    <button id="confirmWithdraw" class="confirm-btn withdraw-btn">Withdraw</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast & Loading -->
+        <div class="toast" id="toast"></div>
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
     </div>
-    <button class="grid-close" id="gridClose">✕ Close</button>
-  </div>
-</div>
 
-<!-- AI Prediction Bar - Thin & Clean -->
-<div class="prediction-bar" id="predictionBar">
-  <div class="bar-section">
-    <div class="period-id">Period <span id="barPeriodId">1847</span></div>
-    <div class="bar-divider"></div>
-    <div class="timer">⏱ <span id="barTimer">00:00</span></div>
-  </div>
-  <div class="bar-divider"></div>
-  <div class="prediction-result">
-    <div class="pred-number" id="barPredNumber">7</div>
-    <div class="pred-details">
-      <span class="size-badge" id="barSizeBadge">BIG</span>
-      <span class="color-badge red" id="barColorBadge">RED</span>
-    </div>
-  </div>
-  <button class="close-bar" id="closeBar">✕</button>
-</div>
-
-<script>
-  (function() {
-    "use strict";
-
-    // Elements
-    const floatingBtn = document.getElementById('floatingBtn');
-    const gridPopup = document.getElementById('gridPopup');
-    const gridClose = document.getElementById('gridClose');
-    const aiOption = document.getElementById('aiOption');
-    const vipOption = document.getElementById('vipOption');
-    const predictionBar = document.getElementById('predictionBar');
-    const barPeriodId = document.getElementById('barPeriodId');
-    const barTimer = document.getElementById('barTimer');
-    const barPredNumber = document.getElementById('barPredNumber');
-    const barSizeBadge = document.getElementById('barSizeBadge');
-    const barColorBadge = document.getElementById('barColorBadge');
-    const closeBar = document.getElementById('closeBar');
-    const blurOverlay = document.getElementById('blurOverlay');
-
-    let isBarOpen = false;
-    let countdownInterval = null;
-    let periodInterval = null;
-    let currentPrediction = { number: 7, size: 'BIG', color: 'RED' };
-
-    // ----- Floating Button Drag -----
-    let isDragging = false;
-    let dragStartX, dragStartY;
-    let hasMoved = false;
-
-    floatingBtn.addEventListener('mousedown', function(e) {
-      isDragging = true;
-      hasMoved = false;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      floatingBtn.style.cursor = 'grabbing';
-      floatingBtn.style.transition = 'none';
-      e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', function(e) {
-      if (!isDragging) return;
-      
-      const dx = e.clientX - dragStartX;
-      const dy = e.clientY - dragStartY;
-      
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-        hasMoved = true;
-      }
-      
-      const rect = floatingBtn.getBoundingClientRect();
-      let x = e.clientX - rect.width / 2;
-      let y = e.clientY - rect.height / 2;
-      
-      const maxX = window.innerWidth - rect.width;
-      const maxY = window.innerHeight - rect.height;
-      x = Math.max(0, Math.min(x, maxX));
-      y = Math.max(0, Math.min(y, maxY));
-      
-      floatingBtn.style.left = x + 'px';
-      floatingBtn.style.top = y + 'px';
-      floatingBtn.style.right = 'auto';
-      floatingBtn.style.bottom = 'auto';
-    });
-
-    document.addEventListener('mouseup', function(e) {
-      if (isDragging) {
-        isDragging = false;
-        floatingBtn.style.cursor = 'grab';
-        floatingBtn.style.transition = 'none';
-        
-        if (!hasMoved) {
-          openGrid();
-        }
-        hasMoved = false;
-      }
-    });
-
-    // Touch events
-    let touchStartX, touchStartY;
-    let touchHasMoved = false;
-
-    floatingBtn.addEventListener('touchstart', function(e) {
-      const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-      touchHasMoved = false;
-      isDragging = true;
-    }, { passive: true });
-
-    floatingBtn.addEventListener('touchmove', function(e) {
-      if (!isDragging) return;
-      e.preventDefault();
-      
-      const touch = e.touches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
-      
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-        touchHasMoved = true;
-      }
-      
-      const rect = floatingBtn.getBoundingClientRect();
-      let x = touch.clientX - rect.width / 2;
-      let y = touch.clientY - rect.height / 2;
-      
-      const maxX = window.innerWidth - rect.width;
-      const maxY = window.innerHeight - rect.height;
-      x = Math.max(0, Math.min(x, maxX));
-      y = Math.max(0, Math.min(y, maxY));
-      
-      floatingBtn.style.left = x + 'px';
-      floatingBtn.style.top = y + 'px';
-      floatingBtn.style.right = 'auto';
-      floatingBtn.style.bottom = 'auto';
-    }, { passive: false });
-
-    floatingBtn.addEventListener('touchend', function(e) {
-      if (isDragging) {
-        isDragging = false;
-        if (!touchHasMoved) {
-          openGrid();
-        }
-        touchHasMoved = false;
-      }
-    }, { passive: true });
-
-    // ----- RNG Prediction Generator -----
-    function generateRNGPrediction() {
-      const number = Math.floor(Math.random() * 10);
-      let size, color, colorClass;
-      
-      if (number >= 0 && number <= 4) {
-        size = 'SMALL';
-      } else {
-        size = 'BIG';
-      }
-      
-      if (number === 0 || number === 5) {
-        color = 'VIOLET';
-        colorClass = 'violet';
-      } else if (number % 2 === 0) {
-        color = 'RED';
-        colorClass = 'red';
-      } else {
-        color = 'GREEN';
-        colorClass = 'green';
-      }
-      
-      return { number, size, color, colorClass };
-    }
-
-    // ----- Get Period ID from Real Clock (YYMMDD10 format) -----
-    function getPeriodId() {
-      const now = new Date();
-      const year = String(now.getFullYear()).slice(2);
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      return year + month + day + hours + minutes;
-    }
-
-    // ----- Update Prediction Bar -----
-    function updatePredictionBar(prediction) {
-      currentPrediction = prediction;
-      barPredNumber.textContent = prediction.number;
-      barPredNumber.className = 'pred-number';
-      if (prediction.colorClass) {
-        barPredNumber.classList.add(prediction.colorClass);
-      }
-      
-      barSizeBadge.textContent = prediction.size;
-      if (prediction.size === 'BIG') {
-        barSizeBadge.className = 'size-badge big';
-      } else {
-        barSizeBadge.className = 'size-badge';
-      }
-      
-      barColorBadge.textContent = prediction.color;
-      barColorBadge.className = 'color-badge ' + prediction.colorClass;
-      
-      barPeriodId.textContent = getPeriodId();
-    }
-
-    // ----- Update Timer (Countdown to next minute) -----
-    function updateTimer() {
-      const now = new Date();
-      const seconds = now.getSeconds();
-      const milliseconds = now.getMilliseconds();
-      const remaining = 60 - seconds - (milliseconds / 1000);
-      const mins = Math.floor(remaining / 60);
-      const secs = Math.floor(remaining % 60);
-      barTimer.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-      
-      if (remaining < 0.5) {
-        const newPred = generateRNGPrediction();
-        updatePredictionBar(newPred);
-      }
-    }
-
-    // ----- Grid Popup -----
-    function openGrid() {
-      gridPopup.classList.add('active');
-      blurOverlay.classList.add('active');
-    }
-
-    function closeGrid() {
-      gridPopup.classList.remove('active');
-      blurOverlay.classList.remove('active');
-    }
-
-    // ----- Open AI Prediction Bar (Clean) -----
-    function openAIBar() {
-      // Close grid and remove blur immediately
-      closeGrid();
-      blurOverlay.classList.remove('active');
-      
-      // Show bar
-      isBarOpen = true;
-      predictionBar.classList.add('active');
-      
-      // Generate initial prediction
-      const pred = generateRNGPrediction();
-      updatePredictionBar(pred);
-      
-      // Start timer updates
-      if (countdownInterval) clearInterval(countdownInterval);
-      countdownInterval = setInterval(updateTimer, 100);
-      
-      // Update period every minute
-      if (periodInterval) clearInterval(periodInterval);
-      periodInterval = setInterval(() => {
-        barPeriodId.textContent = getPeriodId();
-      }, 60000);
-      
-      updateTimer();
-    }
-
-    function closeBarFn() {
-      isBarOpen = false;
-      predictionBar.classList.remove('active');
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
-      if (periodInterval) {
-        clearInterval(periodInterval);
-        periodInterval = null;
-      }
-    }
-
-    // ----- VIP Prediction (Just close grid) -----
-    function openVipComingSoon() {
-      closeGrid();
-    }
-
-    // ----- Grid Event Listeners -----
-    gridClose.addEventListener('click', closeGrid);
-
-    aiOption.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openAIBar();
-    });
-
-    vipOption.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openVipComingSoon();
-    });
-
-    // Click outside to close grid
-    gridPopup.addEventListener('click', function(e) {
-      if (e.target === gridPopup) closeGrid();
-    });
-
-    // Close bar button
-    closeBar.addEventListener('click', closeBarFn);
-
-    // Initial state
-    gridPopup.classList.remove('active');
-    predictionBar.classList.remove('active');
-    blurOverlay.classList.remove('active');
-
-    // Set initial timer
-    updateTimer();
-
-    console.log('Maxx VIP AI - Prediction Engine Active');
-    console.log('Rules: 0-4=Small, 5-9=Big, Even=Red, Odd=Green, 0&5=Violet');
-    console.log('Period format: YYMMDDHHMM (changes every minute)');
-  })();
-</script>
+    <script src="app.js"></script>
 </body>
-</html>
+                  </html>
