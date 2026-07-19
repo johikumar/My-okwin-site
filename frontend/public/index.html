@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Wingo - GO A GAMES</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+    <div id="app">
+        <!-- ============================================ -->
+        <!-- MAIN LAYOUT -->
+        <!-- ============================================ -->
+        <div class="app-container">
+            
+            <!-- ========== HEADER / TOP BAR ========== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-btn" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="logo">
+                        <span class="logo-icon">🎯</span>
+                        <span class="logo-text">GO A GAMES</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="notification-btn" id="notificationBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <div class="user-avatar" id="userAvatar">
+                        <img src="https://ui-avatars.com/api/?name=User&background=6C3CE1&color=fff&size=32" alt="User" />
+                    </div>
+                </div>
+            </header>
+
+            <!-- ========== WALLET CARD ========== -->
+            <section class="wallet-section">
+                <div class="wallet-card">
+                    <div class="wallet-header">
+                        <span class="wallet-label">Wallet Balance</span>
+                        <span class="wallet-currency">₹</span>
+                    </div>
+                    <div class="wallet-balance">
+                        <span class="balance-amount">0.35</span>
+                        <span class="balance-small">USD</span>
+                    </div>
+                    <div class="wallet-actions">
+                        <button class="wallet-btn withdraw-btn">
+                            <i class="fas fa-arrow-up"></i> Withdraw
+                        </button>
+                        <button class="wallet-btn deposit-btn">
+                            <i class="fas fa-arrow-down"></i> Deposit
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== GAME SELECTION TABS ========== -->
+            <section class="game-tabs-section">
+                <div class="game-tabs">
+                    <button class="game-tab active" data-timer="30">
+                        <span class="tab-icon">⚡</span>
+                        <span class="tab-label">WinGo 30sec</span>
+                    </button>
+                    <button class="game-tab" data-timer="60">
+                        <span class="tab-icon">⏱️</span>
+                        <span class="tab-label">WinGo 1 Min</span>
+                    </button>
+                    <button class="game-tab" data-timer="180">
+                        <span class="tab-icon">🕒</span>
+                        <span class="tab-label">WinGo 3 Min</span>
+                    </button>
+                    <button class="game-tab" data-timer="300">
+                        <span class="tab-icon">⏳</span>
+                        <span class="tab-label">WinGo 5 Min</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ========== GAME AREA ========== -->
+            <section class="game-area">
+                <!-- Game Info -->
+                <div class="game-info">
+                    <div class="game-period">
+                        <span class="period-label">Period</span>
+                        <span class="period-value" id="periodValue">20260719100052333</span>
+                    </div>
+                    <div class="game-timer">
+                        <span class="timer-label">Time remaining</span>
+                        <span class="timer-value" id="timerValue">0:01:11</span>
+                    </div>
+                </div>
+
+                <!-- Number Display -->
+                <div class="number-display">
+                    <div class="number-circle" id="numberCircle">
+                        <span class="number-text" id="numberText">?</span>
+                    </div>
+                    <div class="color-indicators">
+                        <span class="color-dot green"></span>
+                        <span class="color-dot violet"></span>
+                        <span class="color-dot red"></span>
+                    </div>
+                </div>
+
+                <!-- Bet Type Options -->
+                <div class="bet-options">
+                    <div class="bet-type-group">
+                        <button class="bet-type-btn active" data-type="green">
+                            <span class="color-badge green"></span>
+                            Green
+                        </button>
+                        <button class="bet-type-btn" data-type="violet">
+                            <span class="color-badge violet"></span>
+                            Violet
+                        </button>
+                        <button class="bet-type-btn" data-type="red">
+                            <span class="color-badge red"></span>
+                            Red
+                        </button>
+                        <button class="bet-type-btn" data-type="random">
+                            <span class="color-badge rainbow">🌈</span>
+                            Random
+                        </button>
+                    </div>
+
+                    <!-- Number Grid -->
+                    <div class="number-grid">
+                        <button class="num-btn" data-number="0">0</button>
+                        <button class="num-btn" data-number="1">1</button>
+                        <button class="num-btn" data-number="2">2</button>
+                        <button class="num-btn" data-number="3">3</button>
+                        <button class="num-btn" data-number="4">4</button>
+                        <button class="num-btn" data-number="5">5</button>
+                        <button class="num-btn" data-number="6">6</button>
+                        <button class="num-btn" data-number="7">7</button>
+                        <button class="num-btn" data-number="8">8</button>
+                        <button class="num-btn" data-number="9">9</button>
+                    </div>
+
+                    <!-- Multiplier & Bet Amount -->
+                    <div class="bet-controls">
+                        <div class="multiplier-group">
+                            <span class="multiplier-label">Random</span>
+                            <button class="multiplier-btn active" data-multiplier="1">X1</button>
+                            <button class="multiplier-btn" data-multiplier="5">X5</button>
+                            <button class="multiplier-btn" data-multiplier="10">X10</button>
+                            <button class="multiplier-btn" data-multiplier="20">X20</button>
+                            <button class="multiplier-btn" data-multiplier="50">X50</button>
+                            <button class="multiplier-btn" data-multiplier="100">X100</button>
+                        </div>
+                    </div>
+
+                    <!-- Big/Small & Place Bet -->
+                    <div class="bet-action-row">
+                        <div class="big-small-group">
+                            <button class="big-small-btn big">Big</button>
+                            <button class="big-small-btn small">Small</button>
+                        </div>
+                        <div class="bet-amount-group">
+                            <input type="number" class="bet-amount-input" id="betAmount" value="1" min="1" step="1" />
+                            <button class="place-bet-btn" id="placeBetBtn">
+                                <i class="fas fa-dice"></i> Place Bet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== GAME HISTORY TABS ========== -->
+            <section class="history-section">
+                <div class="history-tabs">
+                    <button class="history-tab active" data-tab="history">Game history</button>
+                    <button class="history-tab" data-tab="chart">Chart</button>
+                    <button class="history-tab" data-tab="strategy">Follow Strategy</button>
+                </div>
+
+                <!-- History Table -->
+                <div class="history-content" id="historyContent">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Number</th>
+                                <th>Big Small</th>
+                                <th>Color</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <!-- Dynamic rows will be inserted here -->
+                        </tbody>
+                    </table>
+                    <div class="history-pagination">
+                        <span class="page-info">1/50</span>
+                        <div class="page-controls">
+                            <button class="page-btn" id="prevPage"><i class="fas fa-chevron-left"></i></button>
+                            <button class="page-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart (hidden by default) -->
+                <div class="chart-content" id="chartContent" style="display:none;">
+                    <div class="chart-placeholder">
+                        <canvas id="gameChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Strategy (hidden by default) -->
+                <div class="strategy-content" id="strategyContent" style="display:none;">
+                    <div class="strategy-card">
+                        <h4>📊 Follow Strategy</h4>
+                        <p>Track winning patterns and follow trends automatically.</p>
+                        <div class="strategy-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Current Streak</span>
+                                <span class="stat-value">🔥 5 Wins</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Best Pattern</span>
+                                <span class="stat-value">🟢 Green</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Win Rate</span>
+                                <span class="stat-value">68%</span>
+                            </div>
+                        </div>
+                        <button class="follow-strategy-btn">Follow Strategy</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== BOTTOM NAVIGATION ========== -->
+            <nav class="bottom-nav">
+                <a href="#" class="nav-item active" data-page="home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="nav-item" data-page="game">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Game</span>
+                </a>
+                <a href="#" class="nav-item" data-page="history">
+                    <i class="fas fa-clock-rotate-left"></i>
+                    <span>History</span>
+                </a>
+                <a href="#" class="nav-item" data-page="wallet">
+                    <i class="fas fa-wallet"></i>
+                    <span>Wallet</span>
+                </a>
+                <a href="#" class="nav-item" data-page="profile">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </nav>
+
+        </div>
+    </div>
+
+    <!-- ========== SIDEBAR (Hidden by default) ========== -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-user">
+                <img src="https://ui-avatars.com/api/?name=User&background=6C3CE1&color=fff&size=48" alt="User" />
+                <div class="sidebar-user-info">
+                    <h4>Welcome, User</h4>
+                    <span>ID: #10023456</span>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-link active">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-gamepad"></i> Wingo Game
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-history"></i> Game History
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-wallet"></i> Wallet
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-arrow-up"></i> Deposit
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-arrow-down"></i> Withdraw
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-users"></i> Referral
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-gift"></i> Promotions
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-headset"></i> Support
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- ========== NOTIFICATION PANEL ========== -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-header">
+            <h4>Notifications</h4>
+            <button class="close-notifications" id="closeNotifications">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="notification-list">
+            <div class="notification-item unread">
+                <div class="notif-icon deposit">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="notif-content">
+                    <p class="notif-title">Deposit Approved</p>
+                    <p class="notif-message">Your deposit of ₹500 has been approved.</p>
+                    <span class="notif-time">2 min ago</span>
+                </div>
+            </div>
+            <div class="notification-item unread">
+                <div class="notif-icon win">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="notif-content">
+                    <p class="notif-title">🎉 You Won!</p>
+                    <p class="notif-message">You won ₹250 on Green bet.</p>
+                    <span class="notif-time">15 min ago</span>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notif-icon referral">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="notif-content">
+                    <p class="notif-title">Referral Bonus</p>
+                    <p class="notif-message">You earned ₹25 for referring User123.</p>
+                    <span class="notif-time">1 hour ago</span>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notif-icon info">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="notif-content">
+                    <p class="notif-title">Welcome Bonus</p>
+                    <p class="notif-message">₹50 welcome bonus added to your wallet.</p>
+                    <span class="notif-time">2 hours ago</span>
+                </div>
+            </div>
+        </div>
+        <div class="notification-footer">
+            <button class="mark-all-read">Mark all as read</button>
+        </div>
+    </div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="js/app.js"></script>
+</body>
+  </html>
