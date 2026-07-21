@@ -1,87 +1,1231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K9BETS - WinGo</title>
-    <style>
-        /* ... Keep your existing CSS here ... */
-        .bet-controls { margin-top: 20px; text-align: center; }
-        .bet-input { padding: 10px; width: 80%; border-radius: 5px; border: 1px solid #8b5cf6; background: #1e0a3c; color: white; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>K9BETS - WinGo</title>
 </head>
 <body>
-    <div class="app-container">
-        <!-- AUTH VIEW -->
-        <div id="view-auth" class="auth-container active">
-            <h2 style="text-align: center; color: var(--flame-orange);">K9BETS LOGIN</h2>
-            <input type="text" id="phone" class="input-ctrl" placeholder="Mobile Number">
-            <input type="password" id="password" class="input-ctrl" placeholder="Password">
-            <button class="btn-submit" onclick="login()">Enter Arena</button>
-        </div>
+<div id="root"></div>
+<script>
+// =========================================================
+// PART 1 — CSS + DOM STRUCTURE (with K9BETS branding & bet input)
+// =========================================================
 
-        <!-- MAIN APP -->
-        <div id="view-main" style="display: none;">
-            <div class="top-header">
-                <div class="balance-amount">₹<span id="uiBalance">0.00</span></div>
-            </div>
-            
-            <div class="game-section active">
-                <div class="timer-header">
-                    <div class="period-val" id="uiPeriod">Syncing...</div>
-                    <div class="countdown-val" id="uiTimer">--:--</div>
-                </div>
+(function() {
+    "use strict";
 
-                <!-- Betting Input UI instead of prompt -->
-                <div class="bet-controls">
-                    <input type="number" id="betAmount" class="bet-input" placeholder="Enter Amount (e.g., 10)">
-                </div>
+    // ---------- CSS Injection (updated with new bet-controls) ----------
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+    /* =========================================================
+       K9BETS — WinGo (JS-generated)
+       All styles injected dynamically.
+       ========================================================= */
 
-                <div class="color-matrix">
-                    <button class="color-btn bg-green" onclick="placeBet('Green')">Green</button>
-                    <button class="color-btn bg-violet" onclick="placeBet('Violet')">Violet</button>
-                    <button class="color-btn bg-red" onclick="placeBet('Red')">Red</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    /* ---------- Design Tokens ---------- */
+    :root{
+      --deep-blue:#0B1026;
+      --dark-navy:#0F1730;
+      --navy-2:#141d3d;
+      --purple:#6C3BFF;
+      --violet:#9B59FF;
+      --neon-green:#00FFA3;
+      --bright-red:#FF3B5C;
+      --gold:#FFD36E;
+      --glass-bg:rgba(255,255,255,0.06);
+      --glass-border:rgba(255,255,255,0.12);
+      --text-main:#EAF0FF;
+      --text-dim:#8C94B8;
+      --radius-lg:22px;
+      --radius-md:18px;
+      --shadow-soft:0 8px 32px rgba(0,0,0,0.45);
+      --ease:cubic-bezier(.22,1,.36,1);
+    }
 
-    <script>
-        let token = localStorage.getItem('k9b_token');
-        
-        async function placeBet(selection) {
-            const amount = document.getElementById('betAmount').value;
-            if(!amount || amount <= 0) return alert("Please enter a valid amount");
+    *{box-sizing:border-box; margin:0; padding:0;}
 
-            try {
-                const res = await fetch('/api/games/bet', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                    body: JSON.stringify({ selection, amount })
-                });
-                const data = await res.json();
-                if(res.ok) {
-                    alert('Bet Placed!');
-                    fetchProfile();
-                } else {
-                    alert(data.error);
-                }
-            } catch (err) {
-                alert("Connection error. Try again.");
-            }
+    html,body{
+      height:100%;
+      background:var(--deep-blue);
+      color:var(--text-main);
+      font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
+      overflow-x:hidden;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    body{
+      min-height:100vh;
+      padding-bottom:40px;
+    }
+
+    /* ---------- Animated Background ---------- */
+    .bg-layer{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(108,59,255,0.25), transparent 45%),
+        radial-gradient(circle at 85% 15%, rgba(0,255,163,0.12), transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(255,59,92,0.15), transparent 45%),
+        linear-gradient(180deg, var(--deep-blue), var(--dark-navy) 60%, var(--deep-blue));
+    }
+
+    .orb{
+      position:absolute;
+      border-radius:50%;
+      filter:blur(60px);
+      opacity:0.45;
+      will-change:transform;
+      animation:floatOrb 18s ease-in-out infinite;
+    }
+    .orb1{width:280px;height:280px;background:var(--purple);top:-60px;left:-60px;animation-duration:20s;}
+    .orb2{width:220px;height:220px;background:var(--neon-green);top:40%;right:-80px;animation-duration:24s;animation-delay:-4s;}
+    .orb3{width:260px;height:260px;background:var(--bright-red);bottom:-80px;left:20%;animation-duration:22s;animation-delay:-8s;}
+    .orb4{width:180px;height:180px;background:var(--violet);bottom:10%;right:10%;animation-duration:16s;animation-delay:-2s;}
+
+    @keyframes floatOrb{
+      0%,100%{transform:translate(0,0) scale(1);}
+      33%{transform:translate(30px,-40px) scale(1.1);}
+      66%{transform:translate(-20px,25px) scale(0.95);}
+    }
+
+    .particle{
+      position:absolute;
+      width:3px;height:3px;
+      background:rgba(255,255,255,0.5);
+      border-radius:50%;
+      animation:drift linear infinite;
+    }
+    @keyframes drift{
+      0%{transform:translateY(110vh) translateX(0); opacity:0;}
+      10%{opacity:0.8;}
+      90%{opacity:0.6;}
+      100%{transform:translateY(-10vh) translateX(40px); opacity:0;}
+    }
+
+    /* ---------- Layout Shell ---------- */
+    .app{
+      position:relative;
+      z-index:1;
+      max-width:480px;
+      margin:0 auto;
+      padding:0 14px;
+    }
+
+    /* ---------- Glass Card Base ---------- */
+    .glass{
+      background:var(--glass-bg);
+      border:1px solid var(--glass-border);
+      border-radius:var(--radius-lg);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      box-shadow:var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,0.08);
+      position:relative;
+      overflow:hidden;
+    }
+    .glass::before{
+      content:'';
+      position:absolute;
+      top:0; left:-40%;
+      width:60%; height:100%;
+      background:linear-gradient(115deg, rgba(255,255,255,0.12), transparent 60%);
+      pointer-events:none;
+    }
+
+    /* ---------- Header ---------- */
+    .header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      margin:0 -14px 16px -14px;
+      background:rgba(11,16,38,0.85);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      border-bottom:1px solid rgba(255,255,255,0.08);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .brand-icon{
+      width:34px; height:34px;
+      border-radius:10px;
+      background:linear-gradient(135deg, var(--purple), var(--violet));
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px;
+      box-shadow:0 0 14px rgba(108,59,255,0.7), 0 0 28px rgba(108,59,255,0.35);
+      animation:iconGlow 2.6s ease-in-out infinite;
+    }
+    @keyframes iconGlow{
+      0%,100%{box-shadow:0 0 14px rgba(108,59,255,0.7), 0 0 28px rgba(108,59,255,0.35);}
+      50%{box-shadow:0 0 20px rgba(108,59,255,0.95), 0 0 40px rgba(108,59,255,0.55);}
+    }
+    .brand-name{
+      font-size:17px;
+      font-weight:800;
+      letter-spacing:0.3px;
+      background:linear-gradient(90deg, #fff, var(--violet));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+
+    .wallet{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(255,211,110,0.08);
+      border:1px solid rgba(255,211,110,0.35);
+    }
+    .wallet-icon{font-size:15px;}
+    .wallet-balance{
+      font-weight:800;
+      font-size:15px;
+      color:var(--gold);
+      text-shadow:0 0 10px rgba(255,211,110,0.7);
+      animation:balancePulse 2.4s ease-in-out infinite;
+    }
+    @keyframes balancePulse{
+      0%,100%{text-shadow:0 0 8px rgba(255,211,110,0.6);}
+      50%{text-shadow:0 0 16px rgba(255,211,110,1), 0 0 26px rgba(255,211,110,0.5);}
+    }
+
+    /* ---------- Section Titles ---------- */
+    .section-title{
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:1px;
+      text-transform:uppercase;
+      color:var(--text-dim);
+      margin:20px 4px 10px 4px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .section-title::after{
+      content:'';
+      flex:1;
+      height:1px;
+      background:linear-gradient(90deg, rgba(255,255,255,0.15), transparent);
+    }
+
+    /* ---------- Period & Timer Card ---------- */
+    .period-card{
+      padding:18px;
+      margin-bottom:16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .period-info{flex:1;}
+    .period-label{
+      font-size:11px;
+      color:var(--text-dim);
+      text-transform:uppercase;
+      letter-spacing:1px;
+      margin-bottom:4px;
+    }
+    .period-value{
+      font-size:20px;
+      font-weight:800;
+      letter-spacing:0.5px;
+      color:#fff;
+    }
+
+    .timer-wrap{
+      position:relative;
+      width:78px; height:78px;
+      flex-shrink:0;
+    }
+    .timer-svg{
+      width:100%; height:100%;
+      transform:rotate(-90deg);
+    }
+    .timer-track{
+      fill:none;
+      stroke:rgba(255,255,255,0.08);
+      stroke-width:6;
+    }
+    .timer-progress{
+      fill:none;
+      stroke:var(--neon-green);
+      stroke-width:6;
+      stroke-linecap:round;
+      transition:stroke-dashoffset 1s linear, stroke 0.4s ease;
+      filter:drop-shadow(0 0 6px rgba(0,255,163,0.8));
+    }
+    .timer-progress.warning{
+      stroke:var(--bright-red);
+      filter:drop-shadow(0 0 8px rgba(255,59,92,0.85));
+    }
+    .timer-text{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:22px;
+      font-weight:800;
+      color:#fff;
+    }
+    .timer-wrap.pulse .timer-text{
+      animation:timerPulse 1s ease-in-out infinite;
+    }
+    @keyframes timerPulse{
+      0%,100%{transform:scale(1); color:#fff;}
+      50%{transform:scale(1.15); color:var(--bright-red);}
+    }
+
+    /* ---------- Result Card ---------- */
+    .result-card{
+      padding:22px;
+      margin-bottom:16px;
+      text-align:center;
+    }
+    .result-label{
+      font-size:11px;
+      color:var(--text-dim);
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+      margin-bottom:14px;
+    }
+    .result-badge{
+      width:110px; height:110px;
+      margin:0 auto 14px auto;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:44px;
+      font-weight:900;
+      color:#fff;
+      position:relative;
+      transition:transform 0.4s var(--ease);
+    }
+    .result-badge.pop{
+      animation:resultPop 0.6s var(--ease);
+    }
+    @keyframes resultPop{
+      0%{transform:scale(0.3) rotate(-20deg); opacity:0;}
+      60%{transform:scale(1.15) rotate(6deg); opacity:1;}
+      100%{transform:scale(1) rotate(0deg);}
+    }
+    .badge-green{background:radial-gradient(circle at 30% 30%, #35ffc0, #00b378); box-shadow:0 0 30px rgba(0,255,163,0.6), 0 0 60px rgba(0,255,163,0.25);}
+    .badge-red{background:radial-gradient(circle at 30% 30%, #ff6b85, #c30032); box-shadow:0 0 30px rgba(255,59,92,0.6), 0 0 60px rgba(255,59,92,0.25);}
+    .badge-violet{background:radial-gradient(circle at 30% 30%, #c79bff, #6C3BFF); box-shadow:0 0 30px rgba(155,89,255,0.6), 0 0 60px rgba(155,89,255,0.25);}
+
+    .result-meta{
+      display:flex;
+      justify-content:center;
+      gap:18px;
+      font-size:13px;
+      color:var(--text-dim);
+    }
+    .result-meta span b{color:#fff;}
+
+    /* ---------- Betting Amount Chips ---------- */
+    .chip-row{
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      padding:4px 2px 10px 2px;
+      scrollbar-width:none;
+      margin-bottom:6px;
+    }
+    .chip-row::-webkit-scrollbar{display:none;}
+    .chip{
+      flex:0 0 auto;
+      padding:10px 18px;
+      border-radius:14px;
+      background:linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border:1px solid var(--glass-border);
+      color:var(--text-main);
+      font-weight:700;
+      font-size:14px;
+      cursor:pointer;
+      transition:transform 0.2s var(--ease), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+    }
+    .chip:active{transform:scale(0.94);}
+    .chip.selected{
+      background:linear-gradient(135deg, var(--purple), var(--violet));
+      border-color:var(--violet);
+      box-shadow:0 0 18px rgba(108,59,255,0.7), 0 0 34px rgba(108,59,255,0.3);
+      transform:translateY(-2px);
+    }
+
+    /* ---------- Custom Bet Input (NEW) ---------- */
+    .bet-controls {
+      margin-top: 12px;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .bet-input {
+      padding: 10px;
+      width: 80%;
+      border-radius: 5px;
+      border: 1px solid #8b5cf6;
+      background: #1e0a3c;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      outline: none;
+      text-align: center;
+    }
+    .bet-input:focus {
+      border-color: var(--violet);
+      box-shadow: 0 0 12px rgba(108,59,255,0.4);
+    }
+
+    /* ---------- Colour Betting ---------- */
+    .color-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      margin-bottom:6px;
+    }
+    .color-card{
+      padding:20px 8px;
+      border-radius:var(--radius-md);
+      text-align:center;
+      cursor:pointer;
+      border:2px solid transparent;
+      transition:transform 0.25s var(--ease), box-shadow 0.3s ease, border-color 0.3s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .color-card:active{transform:scale(0.95);}
+    .color-card:hover{transform:translateY(-3px);}
+    .color-card .icon{font-size:30px; margin-bottom:8px; display:block;}
+    .color-card .label{font-weight:800; font-size:14px; letter-spacing:0.4px;}
+    .color-card.green{background:linear-gradient(160deg, rgba(0,255,163,0.22), rgba(0,255,163,0.04));}
+    .color-card.violet{background:linear-gradient(160deg, rgba(155,89,255,0.28), rgba(108,59,255,0.05));}
+    .color-card.red{background:linear-gradient(160deg, rgba(255,59,92,0.25), rgba(255,59,92,0.04));}
+    .color-card.green.selected{border-color:var(--neon-green); box-shadow:0 0 22px rgba(0,255,163,0.6);}
+    .color-card.violet.selected{border-color:var(--violet); box-shadow:0 0 22px rgba(155,89,255,0.6);}
+    .color-card.red.selected{border-color:var(--bright-red); box-shadow:0 0 22px rgba(255,59,92,0.6);}
+
+    /* ---------- Number Betting ---------- */
+    .number-row{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .num-btn{
+      flex:1;
+      aspect-ratio:1/1;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      font-weight:800;
+      color:#fff;
+      cursor:pointer;
+      position:relative;
+      border:3px solid transparent;
+      background:var(--navy-2);
+      transition:transform 0.2s var(--ease), box-shadow 0.3s ease;
+    }
+    .num-btn:active{transform:scale(0.9);}
+    .num-btn.ring-green{border-color:var(--neon-green);}
+    .num-btn.ring-red{border-color:var(--bright-red);}
+    .num-btn.ring-mix{
+      border-image:linear-gradient(135deg, var(--bright-red), var(--violet)) 1;
+    }
+    .num-btn.selected{
+      transform:scale(1.08);
+      box-shadow:0 0 18px currentColor;
+    }
+    .num-btn.ring-green.selected{box-shadow:0 0 20px rgba(0,255,163,0.85);}
+    .num-btn.ring-red.selected{box-shadow:0 0 20px rgba(255,59,92,0.85);}
+    .num-btn.ring-mix.selected{box-shadow:0 0 20px rgba(155,89,255,0.85);}
+
+    /* ---------- Big / Small ---------- */
+    .bigsmall-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin-bottom:6px;
+    }
+    .bs-card{
+      padding:26px 10px;
+      border-radius:var(--radius-md);
+      text-align:center;
+      font-size:18px;
+      font-weight:800;
+      cursor:pointer;
+      border:2px solid transparent;
+      transition:transform 0.25s var(--ease), box-shadow 0.3s ease;
+    }
+    .bs-card:active{transform:scale(0.95);}
+    .bs-card.big{background:linear-gradient(145deg, #FF9A44, #FF3B5C);}
+    .bs-card.small{background:linear-gradient(145deg, #4facfe, #3b3bff);}
+    .bs-card.selected{border-color:#fff; box-shadow:0 0 24px rgba(255,255,255,0.35);}
+
+    /* ---------- Place Bet Button ---------- */
+    .place-bet-wrap{margin:20px 0 10px 0;}
+    .place-bet-btn{
+      width:100%;
+      padding:16px;
+      border:none;
+      border-radius:16px;
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:0.5px;
+      color:#fff;
+      cursor:pointer;
+      background:linear-gradient(135deg, var(--purple), var(--violet) 60%, #FF3BAE);
+      box-shadow:0 0 26px rgba(108,59,255,0.55), 0 8px 20px rgba(0,0,0,0.4);
+      transition:transform 0.15s var(--ease), box-shadow 0.3s ease;
+    }
+    .place-bet-btn:active{
+      transform:scale(0.97);
+      box-shadow:0 0 14px rgba(108,59,255,0.4);
+    }
+    .place-bet-btn.disabled{
+      opacity:0.4;
+      cursor:not-allowed;
+      filter:grayscale(0.4);
+    }
+    .place-bet-btn.press-anim{
+      animation:betPress 0.4s var(--ease);
+    }
+    @keyframes betPress{
+      0%{transform:scale(1);}
+      40%{transform:scale(0.93);}
+      70%{transform:scale(1.03);}
+      100%{transform:scale(1);}
+    }
+
+    /* ---------- Toast ---------- */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%) translateY(20px);
+      background:rgba(15,23,48,0.95);
+      border:1px solid var(--glass-border);
+      padding:12px 20px;
+      border-radius:14px;
+      font-size:14px;
+      font-weight:600;
+      z-index:100;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 0.3s ease, transform 0.3s ease;
+      box-shadow:0 8px 24px rgba(0,0,0,0.5);
+      max-width:90%;
+      text-align:center;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+    .toast.success{border-color:rgba(0,255,163,0.5); color:var(--neon-green);}
+    .toast.error{border-color:rgba(255,59,92,0.5); color:var(--bright-red);}
+
+    /* ---------- History Table ---------- */
+    .history-card{
+      padding:12px 14px 16px 14px;
+      margin-top:6px;
+      margin-bottom:24px;
+    }
+    .history-scroll{
+      max-height:340px;
+      overflow-y:auto;
+    }
+    table.history-table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+    .history-table thead th{
+      position:sticky;
+      top:0;
+      background:rgba(15,23,48,0.95);
+      color:var(--text-dim);
+      text-transform:uppercase;
+      font-size:11px;
+      letter-spacing:0.5px;
+      padding:10px 6px;
+      text-align:center;
+      z-index:2;
+    }
+    .history-table tbody td{
+      padding:10px 6px;
+      text-align:center;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+    .history-table tbody tr:hover{background:rgba(255,255,255,0.03);}
+    .dot{
+      display:inline-block;
+      width:10px;height:10px;
+      border-radius:50%;
+      margin-right:4px;
+      vertical-align:middle;
+    }
+    .dot.green{background:var(--neon-green); box-shadow:0 0 6px var(--neon-green);}
+    .dot.red{background:var(--bright-red); box-shadow:0 0 6px var(--bright-red);}
+    .dot.violet{background:var(--violet); box-shadow:0 0 6px var(--violet);}
+    .tag{
+      font-size:11px;
+      font-weight:700;
+      padding:3px 8px;
+      border-radius:8px;
+      background:rgba(255,255,255,0.06);
+    }
+
+    .history-scroll::-webkit-scrollbar{width:5px;}
+    .history-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15); border-radius:4px;}
+
+    @media (max-width:380px){
+      .num-btn{font-size:15px;}
+      .result-badge{width:90px; height:90px; font-size:34px;}
+      .brand-name{font-size:15px;}
+    }
+    @media (min-width:600px){
+      .app{max-width:520px;}
+    }
+
+    footer.credit{
+      text-align:center;
+      color:var(--text-dim);
+      font-size:11px;
+      margin-top:10px;
+      opacity:0.6;
+    }
+    `;
+    document.head.appendChild(styleEl);
+
+    // ---------- Build DOM Structure ----------
+    const root = document.getElementById('root');
+
+    // Background layer
+    const bgLayer = document.createElement('div');
+    bgLayer.className = 'bg-layer';
+    bgLayer.id = 'bgLayer';
+    ['orb1','orb2','orb3','orb4'].forEach(cls => {
+      const orb = document.createElement('div');
+      orb.className = 'orb ' + cls;
+      bgLayer.appendChild(orb);
+    });
+    root.appendChild(bgLayer);
+
+    // App container
+    const app = document.createElement('div');
+    app.className = 'app';
+    root.appendChild(app);
+
+    // --- Header (brand changed to K9BETS) ---
+    const header = document.createElement('header');
+    header.className = 'header';
+    header.innerHTML = `
+      <div class="brand">
+        <div class="brand-icon">🐕</div>
+        <div class="brand-name">K9BETS</div>
+      </div>
+      <div class="wallet">
+        <span class="wallet-icon">💰</span>
+        <span class="wallet-balance" id="balanceText">10,000</span>
+      </div>
+    `;
+    app.appendChild(header);
+
+    // --- Period & Timer ---
+    const periodCard = document.createElement('section');
+    periodCard.className = 'period-card glass';
+    periodCard.innerHTML = `
+      <div class="period-info">
+        <div class="period-label">Current Period</div>
+        <div class="period-value" id="periodValue">202607210001</div>
+      </div>
+      <div class="timer-wrap" id="timerWrap">
+        <svg class="timer-svg" viewBox="0 0 84 84">
+          <circle class="timer-track" cx="42" cy="42" r="36"></circle>
+          <circle class="timer-progress" id="timerProgress" cx="42" cy="42" r="36"></circle>
+        </svg>
+        <div class="timer-text" id="timerText">30</div>
+      </div>
+    `;
+    app.appendChild(periodCard);
+
+    // --- Result ---
+    const resultCard = document.createElement('section');
+    resultCard.className = 'result-card glass';
+    resultCard.innerHTML = `
+      <div class="result-label">Last Result</div>
+      <div class="result-badge badge-violet" id="resultBadge">--</div>
+      <div class="result-meta">
+        <span>Number: <b id="resultNumber">-</b></span>
+        <span>Size: <b id="resultSize">-</b></span>
+      </div>
+    `;
+    app.appendChild(resultCard);
+
+    // --- Bet Amount (Chips) ---
+    const title1 = document.createElement('div');
+    title1.className = 'section-title';
+    title1.textContent = 'Bet Amount';
+    app.appendChild(title1);
+
+    const chipRow = document.createElement('div');
+    chipRow.className = 'chip-row';
+    chipRow.id = 'chipRow';
+    [10,50,100,500,1000,5000].forEach(amt => {
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (amt === 10 ? ' selected' : '');
+      chip.dataset.amount = amt;
+      chip.textContent = amt;
+      chipRow.appendChild(chip);
+    });
+    app.appendChild(chipRow);
+
+    // --- Custom Bet Input (NEW) ---
+    const betControls = document.createElement('div');
+    betControls.className = 'bet-controls';
+    const betInput = document.createElement('input');
+    betInput.type = 'number';
+    betInput.className = 'bet-input';
+    betInput.id = 'betInput';
+    betInput.placeholder = 'Custom amount';
+    betInput.min = '1';
+    betInput.step = '1';
+    betControls.appendChild(betInput);
+    app.appendChild(betControls);
+
+    // --- Colour ---
+    const title2 = document.createElement('div');
+    title2.className = 'section-title';
+    title2.textContent = 'Colour Prediction';
+    app.appendChild(title2);
+
+    const colorGrid = document.createElement('div');
+    colorGrid.className = 'color-grid';
+    colorGrid.id = 'colorGrid';
+    [
+      {color:'green', icon:'🟢', label:'Green'},
+      {color:'violet', icon:'🟣', label:'Violet'},
+      {color:'red', icon:'🔴', label:'Red'}
+    ].forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'color-card ' + c.color;
+      card.dataset.color = c.color;
+      card.innerHTML = `<span class="icon">${c.icon}</span><span class="label">${c.label}</span>`;
+      colorGrid.appendChild(card);
+    });
+    app.appendChild(colorGrid);
+
+    // --- Number ---
+    const title3 = document.createElement('div');
+    title3.className = 'section-title';
+    title3.textContent = 'Number Prediction';
+    app.appendChild(title3);
+
+    const numRow1 = document.createElement('div');
+    numRow1.className = 'number-row';
+    numRow1.id = 'numberRow1';
+    [
+      {num:0, cls:'ring-mix'},
+      {num:1, cls:'ring-green'},
+      {num:2, cls:'ring-red'},
+      {num:3, cls:'ring-green'},
+      {num:4, cls:'ring-red'}
+    ].forEach(n => {
+      const btn = document.createElement('div');
+      btn.className = 'num-btn ' + n.cls;
+      btn.dataset.num = n.num;
+      btn.textContent = n.num;
+      numRow1.appendChild(btn);
+    });
+    app.appendChild(numRow1);
+
+    const numRow2 = document.createElement('div');
+    numRow2.className = 'number-row';
+    numRow2.id = 'numberRow2';
+    [
+      {num:5, cls:'ring-mix'},
+      {num:6, cls:'ring-red'},
+      {num:7, cls:'ring-green'},
+      {num:8, cls:'ring-red'},
+      {num:9, cls:'ring-green'}
+    ].forEach(n => {
+      const btn = document.createElement('div');
+      btn.className = 'num-btn ' + n.cls;
+      btn.dataset.num = n.num;
+      btn.textContent = n.num;
+      numRow2.appendChild(btn);
+    });
+    app.appendChild(numRow2);
+
+    // --- Big/Small ---
+    const title4 = document.createElement('div');
+    title4.className = 'section-title';
+    title4.textContent = 'Big / Small';
+    app.appendChild(title4);
+
+    const bsGrid = document.createElement('div');
+    bsGrid.className = 'bigsmall-grid';
+    bsGrid.id = 'bigSmallGrid';
+    [
+      {size:'big', label:'BIG'},
+      {size:'small', label:'SMALL'}
+    ].forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'bs-card ' + s.size;
+      card.dataset.size = s.size;
+      card.textContent = s.label;
+      bsGrid.appendChild(card);
+    });
+    app.appendChild(bsGrid);
+
+    // --- Place Bet ---
+    const betWrap = document.createElement('div');
+    betWrap.className = 'place-bet-wrap';
+    const betBtn = document.createElement('button');
+    betBtn.className = 'place-bet-btn';
+    betBtn.id = 'placeBetBtn';
+    betBtn.textContent = 'Place Bet';
+    betWrap.appendChild(betBtn);
+    app.appendChild(betWrap);
+
+    // --- History ---
+    const title5 = document.createElement('div');
+    title5.className = 'section-title';
+    title5.textContent = 'Round History';
+    app.appendChild(title5);
+
+    const histCard = document.createElement('section');
+    histCard.className = 'history-card glass';
+    histCard.innerHTML = `
+      <div class="history-scroll">
+        <table class="history-table">
+          <thead><tr><th>Period</th><th>Number</th><th>Colour</th><th>Size</th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    `;
+    app.appendChild(histCard);
+
+    // --- Footer ---
+    const footer = document.createElement('footer');
+    footer.className = 'credit';
+    footer.textContent = 'K9BETS · Virtual coins only · No real money involved';
+    app.appendChild(footer);
+
+    // --- Toast ---
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.id = 'toast';
+    document.body.appendChild(toast);
+
+// =========================================================
+// PART 2 — STATE, CONSTANTS, CORE LOGIC (unchanged)
+// =========================================================
+
+    /* ---------- Config ---------- */
+    const ROUND_SECONDS = 30;
+    const STARTING_BALANCE = 10000;
+    const MAX_HISTORY = 20;
+    const TIMER_RADIUS = 36;
+    const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+
+    const NUMBER_COLOR_MAP = {
+      0: ["red", "violet"],
+      1: ["green"],
+      2: ["red"],
+      3: ["green"],
+      4: ["red"],
+      5: ["green", "violet"],
+      6: ["red"],
+      7: ["green"],
+      8: ["red"],
+      9: ["green"]
+    };
+
+    /* ---------- State ---------- */
+    const state = {
+      balance: STARTING_BALANCE,
+      period: null,
+      secondsLeft: ROUND_SECONDS,
+      timerId: null,
+      selectedAmount: 10,
+      selectedColor: null,
+      selectedNumber: null,
+      selectedSize: null,
+      history: [],
+      pendingBet: null
+    };
+
+    /* ---------- DOM References ---------- */
+    const el = {
+      balanceText: document.getElementById("balanceText"),
+      periodValue: document.getElementById("periodValue"),
+      timerWrap: document.getElementById("timerWrap"),
+      timerProgress: document.getElementById("timerProgress"),
+      timerText: document.getElementById("timerText"),
+      resultBadge: document.getElementById("resultBadge"),
+      resultNumber: document.getElementById("resultNumber"),
+      resultSize: document.getElementById("resultSize"),
+      chipRow: document.getElementById("chipRow"),
+      colorGrid: document.getElementById("colorGrid"),
+      numberRow1: document.getElementById("numberRow1"),
+      numberRow2: document.getElementById("numberRow2"),
+      bigSmallGrid: document.getElementById("bigSmallGrid"),
+      placeBetBtn: document.getElementById("placeBetBtn"),
+      historyBody: document.getElementById("historyBody"),
+      toast: document.getElementById("toast"),
+      bgLayer: document.getElementById("bgLayer"),
+      betInput: document.getElementById("betInput")   // NEW
+    };
+
+    /* ---------- Helpers ---------- */
+    function formatNumber(num) {
+      return num.toLocaleString("en-US");
+    }
+
+    function generateInitialPeriod() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      return `${y}${m}${d}0001`;
+    }
+
+    function nextPeriod(current) {
+      const prefix = current.slice(0, 8);
+      const counter = parseInt(current.slice(8), 10) + 1;
+      return prefix + String(counter).padStart(4, "0");
+    }
+
+    function getSize(number) {
+      return number >= 5 ? "Big" : "Small";
+    }
+
+    function showToast(message, type) {
+      el.toast.textContent = message;
+      el.toast.className = "toast show " + (type || "");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => {
+        el.toast.classList.remove("show");
+      }, 2200);
+    }
+
+    /* ---------- Rendering ---------- */
+    function renderBalance() {
+      el.balanceText.textContent = formatNumber(state.balance);
+    }
+
+    function renderPeriod() {
+      el.periodValue.textContent = state.period;
+    }
+
+    function renderTimer() {
+      const ratio = state.secondsLeft / ROUND_SECONDS;
+      const offset = TIMER_CIRCUMFERENCE * (1 - ratio);
+      el.timerProgress.style.strokeDasharray = TIMER_CIRCUMFERENCE;
+      el.timerProgress.style.strokeDashoffset = offset;
+      el.timerText.textContent = state.secondsLeft;
+
+      const isWarning = state.secondsLeft <= 5;
+      el.timerProgress.classList.toggle("warning", isWarning);
+      el.timerWrap.classList.toggle("pulse", isWarning);
+    }
+
+    function renderResult(number, colors, size) {
+      el.resultBadge.classList.remove("pop");
+      void el.resultBadge.offsetWidth;
+
+      const primaryColor = colors.includes("violet") && colors.length > 1
+        ? colors.find(c => c !== "violet")
+        : colors[0];
+
+      el.resultBadge.className = "result-badge badge-" + (colors.length > 1 ? "violet" : primaryColor);
+      el.resultBadge.textContent = number;
+      el.resultBadge.classList.add("pop");
+
+      el.resultNumber.textContent = number;
+      el.resultSize.textContent = size;
+    }
+
+    function renderHistory() {
+      el.historyBody.innerHTML = state.history
+        .map(row => {
+          const dots = row.colors.map(c => `<span class="dot ${c}"></span>`).join("");
+          return `
+            <tr>
+              <td>${row.period.slice(-6)}</td>
+              <td><b>${row.number}</b></td>
+              <td>${dots}</td>
+              <td><span class="tag">${row.size}</span></td>
+            </tr>`;
+        })
+        .join("");
+    }
+
+    /* ---------- Selection Logic (updated for custom input) ---------- */
+    function selectChip(target) {
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("selected"));
+      target.classList.add("selected");
+      state.selectedAmount = parseInt(target.dataset.amount, 10);
+      // Also update the custom input to reflect the chip value
+      if (el.betInput) el.betInput.value = state.selectedAmount;
+    }
+
+    function selectColor(target) {
+      const already = target.classList.contains("selected");
+      document.querySelectorAll(".color-card").forEach(c => c.classList.remove("selected"));
+      if (!already) {
+        target.classList.add("selected");
+        state.selectedColor = target.dataset.color;
+      } else {
+        state.selectedColor = null;
+      }
+    }
+
+    function selectNumber(target) {
+      const already = target.classList.contains("selected");
+      document.querySelectorAll(".num-btn").forEach(c => c.classList.remove("selected"));
+      if (!already) {
+        target.classList.add("selected");
+        state.selectedNumber = parseInt(target.dataset.num, 10);
+      } else {
+        state.selectedNumber = null;
+      }
+    }
+
+    function selectSize(target) {
+      const already = target.classList.contains("selected");
+      document.querySelectorAll(".bs-card").forEach(c => c.classList.remove("selected"));
+      if (!already) {
+        target.classList.add("selected");
+        state.selectedSize = target.dataset.size;
+      } else {
+        state.selectedSize = null;
+      }
+    }
+
+    function clearSelections() {
+      document.querySelectorAll(".color-card, .num-btn, .bs-card").forEach(c => c.classList.remove("selected"));
+      state.selectedColor = null;
+      state.selectedNumber = null;
+      state.selectedSize = null;
+    }
+
+    /* ---------- Betting (now respects custom input) ---------- */
+    function placeBet() {
+      // Read custom input if provided and valid
+      const customVal = parseInt(el.betInput.value, 10);
+      if (!isNaN(customVal) && customVal > 0) {
+        state.selectedAmount = customVal;
+        // Deselect any chip
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("selected"));
+      } else {
+        // If custom input is empty or invalid, fallback to selected chip (default 10)
+        // but we already have state.selectedAmount set from chip selection.
+        // If no chip selected, default to 10.
+        if (!document.querySelector(".chip.selected")) {
+          const firstChip = document.querySelector(".chip");
+          if (firstChip) {
+            firstChip.classList.add("selected");
+            state.selectedAmount = parseInt(firstChip.dataset.amount, 10);
+          } else {
+            state.selectedAmount = 10;
+          }
         }
+      }
 
-        async function syncGame() {
-            try {
-                const res = await fetch('/api/games/state');
-                const data = await res.json();
-                document.getElementById('uiPeriod').innerText = data.period;
-                document.getElementById('uiTimer').innerText = `00:${String(data.remaining).padStart(2, '0')}`;
-            } catch (err) { console.error("Sync failed"); }
+      const hasSelection = state.selectedColor || state.selectedNumber !== null || state.selectedSize;
+
+      if (!hasSelection) {
+        showToast("Pick a colour, number, or size first", "error");
+        return;
+      }
+      if (state.balance < state.selectedAmount) {
+        showToast("Not enough balance", "error");
+        return;
+      }
+
+      state.balance -= state.selectedAmount;
+      renderBalance();
+
+      el.placeBetBtn.classList.remove("press-anim");
+      void el.placeBetBtn.offsetWidth;
+      el.placeBetBtn.classList.add("press-anim");
+
+      const parts = [];
+      if (state.selectedColor) parts.push(state.selectedColor);
+      if (state.selectedNumber !== null) parts.push("number " + state.selectedNumber);
+      if (state.selectedSize) parts.push(state.selectedSize);
+
+      showToast(`Bet placed: ${formatNumber(state.selectedAmount)} on ${parts.join(", ")}`, "success");
+
+      state.pendingBet = {
+        amount: state.selectedAmount,
+        color: state.selectedColor,
+        number: state.selectedNumber,
+        size: state.selectedSize
+      };
+
+      clearSelections();
+    }
+
+    /* ---------- Settle Bet ---------- */
+    function settleBet(number, colors, size) {
+      const bet = state.pendingBet;
+      if (!bet) return;
+
+      let won = false;
+      let payout = 0;
+
+      if (bet.color && colors.includes(bet.color)) {
+        won = true;
+        payout += bet.amount * (bet.color === "violet" ? 4.5 : 2);
+      }
+      if (bet.number !== null && bet.number === number) {
+        won = true;
+        payout += bet.amount * 9;
+      }
+      if (bet.size && bet.size === size.toLowerCase()) {
+        won = true;
+        payout += bet.amount * 2;
+      }
+
+      if (won) {
+        state.balance += Math.round(payout);
+        renderBalance();
+        showToast(`You won ${formatNumber(Math.round(payout))} coins!`, "success");
+      } else {
+        showToast("Round lost. Better luck next time!", "error");
+      }
+
+      state.pendingBet = null;
+    }
+
+    /* ---------- Round Logic ---------- */
+    function startRound() {
+      state.secondsLeft = ROUND_SECONDS;
+      renderTimer();
+
+      clearInterval(state.timerId);
+      state.timerId = setInterval(tick, 1000);
+    }
+
+    function tick() {
+      state.secondsLeft -= 1;
+      if (state.secondsLeft <= 0) {
+        resolveRound();
+        return;
+      }
+      renderTimer();
+    }
+
+    function resolveRound() {
+      const number = Math.floor(Math.random() * 10);
+      const colors = NUMBER_COLOR_MAP[number];
+      const size = getSize(number);
+
+      settleBet(number, colors, size);
+      renderResult(number, colors, size);
+
+      state.history.unshift({
+        period: state.period,
+        number,
+        colors,
+        size
+      });
+      if (state.history.length > MAX_HISTORY) {
+        state.history.length = MAX_HISTORY;
+      }
+      renderHistory();
+
+      state.period = nextPeriod(state.period);
+      renderPeriod();
+      startRound();
+    }
+
+    /* ---------- Particles ---------- */
+    function spawnParticles(count) {
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement("div");
+        p.className = "particle";
+        p.style.left = Math.random() * 100 + "%";
+        p.style.animationDuration = (10 + Math.random() * 12) + "s";
+        p.style.animationDelay = (Math.random() * 12) + "s";
+        p.style.opacity = (0.3 + Math.random() * 0.4).toFixed(2);
+        el.bgLayer.appendChild(p);
+      }
+    }
+
+// =========================================================
+// PART 3 — EVENT BINDING + INITIALIZATION (updated with input)
+// =========================================================
+
+    /* ---------- Event Wiring ---------- */
+    function bindEvents() {
+      el.chipRow.addEventListener("click", e => {
+        const chip = e.target.closest(".chip");
+        if (chip) selectChip(chip);
+      });
+
+      // Custom input: update selectedAmount on change, but don't auto-select a chip
+      el.betInput.addEventListener("input", function() {
+        const val = parseInt(this.value, 10);
+        if (!isNaN(val) && val > 0) {
+          state.selectedAmount = val;
+          // Deselect chips
+          document.querySelectorAll(".chip").forEach(c => c.classList.remove("selected"));
         }
+      });
 
-        setInterval(syncGame, 1000);
-    </script>
+      el.colorGrid.addEventListener("click", e => {
+        const card = e.target.closest(".color-card");
+        if (card) selectColor(card);
+      });
+
+      [el.numberRow1, el.numberRow2].forEach(row => {
+        row.addEventListener("click", e => {
+          const btn = e.target.closest(".num-btn");
+          if (btn) selectNumber(btn);
+        });
+      });
+
+      el.bigSmallGrid.addEventListener("click", e => {
+        const card = e.target.closest(".bs-card");
+        if (card) selectSize(card);
+      });
+
+      el.placeBetBtn.addEventListener("click", placeBet);
+    }
+
+    /* ---------- Init ---------- */
+    function init() {
+      state.period = generateInitialPeriod();
+      state.pendingBet = null;
+
+      renderBalance();
+      renderPeriod();
+      renderTimer();
+      renderHistory();
+      bindEvents();
+      spawnParticles(18);
+      startRound();
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+
+})();
+</script>
 </body>
 </html>
-
