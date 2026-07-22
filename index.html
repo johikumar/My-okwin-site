@@ -904,389 +904,663 @@
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
 
-    <script>
-        /* =========================================================
-           NOVA GAMES — GAME ENGINE
-           All state, timers, and round logic live here.
-           ========================================================= */
-
-        (function() {
-            "use strict";
-
-            /* ---------- Config ---------- */
-            const ROUND_SECONDS = 30;
-            const STARTING_BALANCE = 10000;
-            const MAX_HISTORY = 20;
-            const TIMER_RADIUS = 36;
-            const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
-
-            // Maps each digit 0-9 to its official colour(s) per the game rules.
-            // 0 and 5 are "mixed" numbers (red+violet / green+violet).
-            const NUMBER_COLOR_MAP = {
-                0: ["red", "violet"],
-                1: ["green"],
-                2: ["red"],
-                3: ["green"],
-                4: ["red"],
-                5: ["green", "violet"],
-                6: ["red"],
-                7: ["green"],
-                8: ["red"],
-                9: ["green"]
-            };
-
-            /* ---------- State ---------- */
-            const state = {
-                balance: STARTING_BALANCE,
-                period: null,
-                secondsLeft: ROUND_SECONDS,
-                timerId: null,
-                selectedAmount: 10,
-                selectedColor: null,
-                selectedNumber: null,
-                selectedSize: null,
-                history: [],
-                pendingBet: null
-            };
-
-            /* ---------- DOM References ---------- */
-            const el = {
-                balanceText: document.getElementById("balanceText"),
-                periodValue: document.getElementById("periodValue"),
-                timerWrap: document.getElementById("timerWrap"),
-                timerProgress: document.getElementById("timerProgress"),
-                timerText: document.getElementById("timerText"),
-                resultBadge: document.getElementById("resultBadge"),
-                resultNumber: document.getElementById("resultNumber"),
-                resultSize: document.getElementById("resultSize"),
-                chipRow: document.getElementById("chipRow"),
-                colorGrid: document.getElementById("colorGrid"),
-                numberRow1: document.getElementById("numberRow1"),
-                numberRow2: document.getElementById("numberRow2"),
-                bigSmallGrid: document.getElementById("bigSmallGrid"),
-                placeBetBtn: document.getElementById("placeBetBtn"),
-                historyBody: document.getElementById("historyBody"),
-                toast: document.getElementById("toast"),
-                bgLayer: document.getElementById("bgLayer")
-            };
-
-            /* ---------- Helpers ---------- */
-
-            function formatNumber(num) {
-                return num.toLocaleString("en-US");
-            }
-
-            function generateInitialPeriod() {
-                const now = new Date();
-                const y = now.getFullYear();
-                const m = String(now.getMonth() + 1).padStart(2, "0");
-                const d = String(now.getDate()).padStart(2, "0");
-                return `${y}${m}${d}0001`;
-            }
-
-            function nextPeriod(current) {
-                const prefix = current.slice(0, 8);
-                const counter = parseInt(current.slice(8), 10) + 1;
-                return prefix + String(counter).padStart(4, "0");
-            }
-
-            function getSize(number) {
-                return number >= 5 ? "Big" : "Small";
-            }
-
-            function showToast(message, type) {
-                el.toast.textContent = message;
-                el.toast.className = "toast show " + (type || "");
-                clearTimeout(showToast._t);
-                showToast._t = setTimeout(() => {
-                    el.toast.classList.remove("show");
-                }, 2200);
-            }
-
-            /* ---------- Rendering ---------- */
-
-            function renderBalance() {
-                el.balanceText.textContent = formatNumber(state.balance);
-            }
-
-            function renderPeriod() {
-                el.periodValue.textContent = state.period;
-            }
-
-            function renderTimer() {
-                const ratio = state.secondsLeft / ROUND_SECONDS;
-                const offset = TIMER_CIRCUMFERENCE * (1 - ratio);
-                el.timerProgress.style.strokeDasharray = TIMER_CIRCUMFERENCE;
-                el.timerProgress.style.strokeDashoffset = offset;
-                el.timerText.textContent = state.secondsLeft;
-
-                const isWarning = state.secondsLeft <= 5;
-                el.timerProgress.classList.toggle("warning", isWarning);
-                el.timerWrap.classList.toggle("pulse", isWarning);
-            }
-
-            function renderResult(number, colors, size) {
-                el.resultBadge.classList.remove("pop");
-                void el.resultBadge.offsetWidth;
-
-                const primaryColor = colors.includes("violet") && colors.length > 1 ?
-                    colors.find(c => c !== "violet") :
-                    colors[0];
-
-                el.resultBadge.className = "result-badge badge-" + (colors.length > 1 ? "violet" : primaryColor);
-                el.resultBadge.textContent = number;
-                el.resultBadge.classList.add("pop");
-
-                el.resultNumber.textContent = number;
-                el.resultSize.textContent = size;
-            }
-
-            function renderHistory() {
-                el.historyBody.innerHTML = state.history
-                    .map(row => {
-                        const dots = row.colors.map(c => `<span class="dot ${c}"></span>`).join("");
-                        return `
-                            <tr>
-                                <td>${row.period.slice(-6)}</td>
-                                <td><b>${row.number}</b></td>
-                                <td>${dots}</td>
-                                <td><span class="tag">${row.size}</span></td>
-                            </tr>`;
-                    })
-                    .join("");
-            }
-
-            /* ---------- Selection Logic ---------- */
-
-            function selectChip(target) {
-                document.querySelectorAll(".chip").forEach(c => c.classList.remove("selected"));
-                target.classList.add("selected");
-                state.selectedAmount = parseInt(target.dataset.amount, 10);
-            }
-
-            function selectColor(target) {
-                const already = target.classList.contains("selected");
-                document.querySelectorAll(".color-card").forEach(c => c.classList.remove("selected"));
-                if (!already) {
-                    target.classList.add("selected");
-                    state.selectedColor = target.dataset.color;
-                } else {
-                    state.selectedColor = null;
-                }
-            }
-
-            function selectNumber(target) {
-                const already = target.classList.contains("selected");
-                document.querySelectorAll(".num-btn").forEach(c => c.classList.remove("selected"));
-                if (!already) {
-                    target.classList.add("selected");
-                    state.selectedNumber = parseInt(target.dataset.num, 10);
-                } else {
-                    state.selectedNumber = null;
-                }
-            }
-
-            function selectSize(target) {
-                const already = target.classList.contains("selected");
-                document.querySelectorAll(".bs-card").forEach(c => c.classList.remove("selected"));
-                if (!already) {
-                    target.classList.add("selected");
-                    state.selectedSize = target.dataset.size;
-                } else {
-                    state.selectedSize = null;
-                }
-            }
-
-            function clearSelections() {
-                document.querySelectorAll(".color-card, .num-btn, .bs-card").forEach(c => c.classList.remove("selected"));
-                state.selectedColor = null;
-                state.selectedNumber = null;
-                state.selectedSize = null;
-            }
-
-            /* ---------- Betting ---------- */
-
-            function placeBet() {
-                const hasSelection = state.selectedColor || state.selectedNumber !== null || state.selectedSize;
-
-                if (!hasSelection) {
-                    showToast("Pick a colour, number, or size first", "error");
-                    return;
-                }
-                if (state.balance < state.selectedAmount) {
-                    showToast("Not enough balance", "error");
-                    return;
-                }
-
-                state.balance -= state.selectedAmount;
-                renderBalance();
-
-                el.placeBetBtn.classList.remove("press-anim");
-                void el.placeBetBtn.offsetWidth;
-                el.placeBetBtn.classList.add("press-anim");
-
-                const parts = [];
-                if (state.selectedColor) parts.push(state.selectedColor);
-                if (state.selectedNumber !== null) parts.push("number " + state.selectedNumber);
-                if (state.selectedSize) parts.push(state.selectedSize);
-
-                showToast(`Bet placed: ${formatNumber(state.selectedAmount)} on ${parts.join(", ")}`, "success");
-
-                state.pendingBet = {
-                    amount: state.selectedAmount,
-                    color: state.selectedColor,
-                    number: state.selectedNumber,
-                    size: state.selectedSize
-                };
-
-                clearSelections();
-            }
-
-            /* ---------- Settlement ---------- */
-
-            function settleBet(number, colors, size) {
-                const bet = state.pendingBet;
-                if (!bet) return;
-
-                let won = false;
-                let payout = 0;
-
-                // Colour bet: 2x for green/red, 4.5x for violet
-                if (bet.color && colors.includes(bet.color)) {
-                    won = true;
-                    const multiplier = bet.color === "violet" ? 4.5 : 2;
-                    payout += bet.amount * multiplier;
-                }
-
-                // Exact number: 9x
-                if (bet.number !== null && bet.number === number) {
-                    won = true;
-                    payout += bet.amount * 9;
-                }
-
-                // Size bet: 2x
-                if (bet.size && bet.size === size.toLowerCase()) {
-                    won = true;
-                    payout += bet.amount * 2;
-                }
-
-                if (won) {
-                    const winAmount = Math.round(payout);
-                    state.balance += winAmount;
-                    renderBalance();
-                    showToast(`🎉 You won ${formatNumber(winAmount)} coins!`, "success");
-                } else {
-                    showToast(`❌ Round lost. Better luck next time!`, "error");
-                }
-
-                state.pendingBet = null;
-            }
-
-            /* ---------- Round Logic ---------- */
-
-            function startRound() {
-                state.secondsLeft = ROUND_SECONDS;
-                renderTimer();
-
-                clearInterval(state.timerId);
-                state.timerId = setInterval(tick, 1000);
-            }
-
-            function tick() {
-                state.secondsLeft -= 1;
-
-                if (state.secondsLeft <= 0) {
-                    resolveRound();
-                    return;
-                }
-                renderTimer();
-            }
-
-            function resolveRound() {
-                const number = Math.floor(Math.random() * 10);
-                const colors = NUMBER_COLOR_MAP[number];
-                const size = getSize(number);
-
-                settleBet(number, colors, size);
-
-                renderResult(number, colors, size);
-
-                state.history.unshift({
-                    period: state.period,
-                    number,
-                    colors,
-                    size
-                });
-                if (state.history.length > MAX_HISTORY) {
-                    state.history.length = MAX_HISTORY;
-                }
-                renderHistory();
-
-                state.period = nextPeriod(state.period);
-                renderPeriod();
-                startRound();
-            }
-
-            /* ---------- Background Particles ---------- */
-
-            function spawnParticles(count) {
-                for (let i = 0; i < count; i++) {
-                    const p = document.createElement("div");
-                    p.className = "particle";
-                    p.style.left = Math.random() * 100 + "%";
-                    p.style.animationDuration = (10 + Math.random() * 12) + "s";
-                    p.style.animationDelay = (Math.random() * 12) + "s";
-                    p.style.opacity = (0.3 + Math.random() * 0.4).toFixed(2);
-                    el.bgLayer.appendChild(p);
-                }
-            }
-
-            /* ---------- Event Wiring ---------- */
-
-            function bindEvents() {
-                el.chipRow.addEventListener("click", e => {
-                    const chip = e.target.closest(".chip");
-                    if (chip) selectChip(chip);
-                });
-
-                el.colorGrid.addEventListener("click", e => {
-                    const card = e.target.closest(".color-card");
-                    if (card) selectColor(card);
-                });
-
-                [el.numberRow1, el.numberRow2].forEach(row => {
-                    row.addEventListener("click", e => {
-                        const btn = e.target.closest(".num-btn");
-                        if (btn) selectNumber(btn);
-                    });
-                });
-
-                el.bigSmallGrid.addEventListener("click", e => {
-                    const card = e.target.closest(".bs-card");
-                    if (card) selectSize(card);
-                });
-
-                el.placeBetBtn.addEventListener("click", placeBet);
-            }
-
-            /* ---------- Init ---------- */
-
-            function init() {
-                state.period = generateInitialPeriod();
-                state.pendingBet = null;
-
-                renderBalance();
-                renderPeriod();
-                renderTimer();
-                renderHistory();
-                bindEvents();
-                spawnParticles(18);
-                startRound();
-            }
-
-            document.addEventListener("DOMContentLoaded", init);
-        })();
-    </script>
-
+                <script>
+  (function() {
+    "use strict";
+
+    const API_BASE = 'http://localhost:3000';
+
+    /* ---------- Constants ---------- */
+    const ROUND_SECONDS = 30;
+    const MAX_HISTORY = 20;
+    const TIMER_RADIUS = 36;
+    const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+    const BONUS_PER_REFERRAL = 500;
+
+    const NUMBER_COLOR_MAP = {
+      0: ["red", "violet"],
+      1: ["green"],
+      2: ["red"],
+      3: ["green"],
+      4: ["red"],
+      5: ["green", "violet"],
+      6: ["red"],
+      7: ["green"],
+      8: ["red"],
+      9: ["green"]
+    };
+
+    /* ---------- State ---------- */
+    const state = {
+      balance: 0,
+      period: null,
+      secondsLeft: ROUND_SECONDS,
+      timerId: null,
+      selectedAmount: 10,
+      selectedColor: null,
+      selectedNumber: null,
+      selectedSize: null,
+      history: [],
+      pendingBet: null,
+      currentUser: null,
+      totalWon: 0,
+      userData: null
+    };
+
+    /* ---------- DOM refs ---------- */
+    const el = {
+      authView: document.getElementById('authView'),
+      loginForm: document.getElementById('loginForm'),
+      registerForm: document.getElementById('registerForm'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      loginError: document.getElementById('loginError'),
+      loginBtn: document.getElementById('loginBtn'),
+      showRegisterLink: document.getElementById('showRegisterLink'),
+      regUsername: document.getElementById('regUsername'),
+      regPassword: document.getElementById('regPassword'),
+      regReferral: document.getElementById('regReferral'),
+      regError: document.getElementById('regError'),
+      registerBtn: document.getElementById('registerBtn'),
+      showLoginLink: document.getElementById('showLoginLink'),
+      authCard: document.getElementById('authCard'),
+      appView: document.getElementById('appView'),
+      navBar: document.getElementById('navBar'),
+      navItems: document.querySelectorAll('.nav-item'),
+      homePage: document.getElementById('homePage'),
+      profilePage: document.getElementById('profilePage'),
+      referralView: document.getElementById('referralView'),
+      homeBrandBtn: document.getElementById('homeBrandBtn'),
+      walletBtn: document.getElementById('walletBtn'),
+      balanceText: document.getElementById('balanceText'),
+      periodValue: document.getElementById('periodValue'),
+      timerWrap: document.getElementById('timerWrap'),
+      timerProgress: document.getElementById('timerProgress'),
+      timerText: document.getElementById('timerText'),
+      resultBadge: document.getElementById('resultBadge'),
+      resultNumber: document.getElementById('resultNumber'),
+      resultSize: document.getElementById('resultSize'),
+      chipRow: document.getElementById('chipRow'),
+      colorGrid: document.getElementById('colorGrid'),
+      numberRow1: document.getElementById('numberRow1'),
+      numberRow2: document.getElementById('numberRow2'),
+      bigSmallGrid: document.getElementById('bigSmallGrid'),
+      placeBetBtn: document.getElementById('placeBetBtn'),
+      historyBody: document.getElementById('historyBody'),
+      profileName: document.getElementById('profileName'),
+      profileUid: document.getElementById('profileUid'),
+      profileBalance: document.getElementById('profileBalance'),
+      profileReferrals: document.getElementById('profileReferrals'),
+      profileBonus: document.getElementById('profileBonus'),
+      profileTotalWon: document.getElementById('profileTotalWon'),
+      inviteBtn: document.getElementById('inviteBtn'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      referralCodeDisplay: document.getElementById('referralCodeDisplay'),
+      copyReferralBtn: document.getElementById('copyReferralBtn'),
+      referralBackBtn: document.getElementById('referralBackBtn'),
+      totalBonusEarned: document.getElementById('totalBonusEarned'),
+      bonusPerReferral: document.getElementById('bonusPerReferral'),
+      toast: document.getElementById('toast'),
+      bgLayer: document.getElementById('bgLayer')
+    };
+
+    /* ---------- Helpers ---------- */
+    function showToast(message, type) {
+      el.toast.textContent = message;
+      el.toast.className = 'toast show ' + (type || '');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.toast.classList.remove('show'), 2200);
+    }
+
+    function formatNumber(num) {
+      return num.toLocaleString('en-US');
+    }
+
+    function generateInitialPeriod() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}${m}${d}0001`;
+    }
+
+    function nextPeriod(current) {
+      const prefix = current.slice(0, 8);
+      const counter = parseInt(current.slice(8), 10) + 1;
+      return prefix + String(counter).padStart(4, '0');
+    }
+
+    function getSize(number) {
+      return number >= 5 ? 'Big' : 'Small';
+    }
+
+    /* ---------- API calls ---------- */
+    async function apiCall(endpoint, options = {}) {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+        body: options.body ? JSON.stringify(options.body) : undefined
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'API error');
+      return data;
+    }
+
+    /* ---------- Auth ---------- */
+    function switchAuthForm(showLogin) {
+      el.loginForm.style.display = showLogin ? 'block' : 'none';
+      el.registerForm.style.display = showLogin ? 'none' : 'block';
+      el.loginError.textContent = '';
+      el.regError.textContent = '';
+    }
+
+    async function handleLogin() {
+      const username = el.loginUsername.value.trim();
+      const password = el.loginPassword.value.trim();
+      if (!username || !password) {
+        el.loginError.textContent = 'Please fill in all fields.';
+        return;
+      }
+      try {
+        const { user } = await apiCall('/api/login', {
+          method: 'POST',
+          body: { username, password }
+        });
+        el.loginError.textContent = '';
+        state.currentUser = username;
+        state.userData = user;
+        state.balance = user.balance;
+        state.totalWon = user.totalWon || 0;
+        state.history = user.history || [];
+        showApp();
+      } catch (err) {
+        el.loginError.textContent = err.message || 'Login failed';
+      }
+    }
+
+    async function handleRegister() {
+      const username = el.regUsername.value.trim();
+      const password = el.regPassword.value.trim();
+      const referral = el.regReferral.value.trim().toUpperCase();
+      if (!username || !password) {
+        el.regError.textContent = 'Please fill in all fields.';
+        return;
+      }
+      if (username.length < 3 || password.length < 4) {
+        el.regError.textContent = 'Username min 3 chars, password min 4';
+        return;
+      }
+      try {
+        const { user } = await apiCall('/api/register', {
+          method: 'POST',
+          body: { username, password, referral }
+        });
+        el.regError.textContent = '';
+        state.currentUser = username;
+        state.userData = user;
+        state.balance = user.balance;
+        state.totalWon = user.totalWon || 0;
+        state.history = user.history || [];
+        showToast('Account created!', 'success');
+        showApp();
+      } catch (err) {
+        el.regError.textContent = err.message || 'Registration failed';
+      }
+    }
+
+    /* ---------- Navigation ---------- */
+    function showApp() {
+      el.authView.classList.remove('active');
+      el.appView.classList.add('active');
+      el.navBar.style.display = 'flex';
+      navigateTo('home');
+      if (!state.timerId) initGame();
+      updateProfileUI();
+      renderBalance();
+    }
+
+    function showAuth() {
+      el.authView.classList.add('active');
+      el.appView.classList.remove('active');
+      el.navBar.style.display = 'none';
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      state.pendingBet = null;
+    }
+
+    function navigateTo(page) {
+      el.navItems.forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+      });
+      el.homePage.style.display = page === 'home' ? 'block' : 'none';
+      el.profilePage.style.display = page === 'profile' ? 'block' : 'none';
+      el.referralView.classList.remove('active');
+      if (page === 'profile') updateProfileUI();
+      if (page === 'home') renderBalance();
+    }
+
+    function showReferral() {
+      el.referralView.classList.add('active');
+      el.homePage.style.display = 'none';
+      el.profilePage.style.display = 'none';
+      const user = state.userData;
+      if (user) {
+        el.referralCodeDisplay.textContent = user.referralCode || '------';
+        const bonusEarned = (user.bonusBalance || 0) + ((user.totalReferrals || 0) * BONUS_PER_REFERRAL);
+        el.totalBonusEarned.textContent = formatNumber(bonusEarned);
+        el.bonusPerReferral.textContent = '+' + formatNumber(BONUS_PER_REFERRAL);
+      }
+    }
+
+    async function updateProfileUI() {
+      if (!state.currentUser) return;
+      try {
+        const { user } = await apiCall(`/api/user/${state.currentUser}`);
+        state.userData = user;
+        state.balance = user.balance;
+        state.totalWon = user.totalWon || 0;
+        state.history = user.history || [];
+        el.profileName.textContent = state.currentUser;
+        el.profileUid.textContent = 'UID: ' + (user.uid || '---');
+        el.profileBalance.textContent = formatNumber(user.balance);
+        el.profileReferrals.textContent = user.totalReferrals || 0;
+        const totalBonus = (user.bonusBalance || 0) + ((user.totalReferrals || 0) * BONUS_PER_REFERRAL);
+        el.profileBonus.textContent = formatNumber(totalBonus);
+        el.profileTotalWon.textContent = formatNumber(user.totalWon || 0);
+        renderBalance();
+      } catch (err) {
+        showToast('Could not refresh profile', 'error');
+      }
+    }
+
+    async function logout() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      state.currentUser = null;
+      state.userData = null;
+      state.pendingBet = null;
+      state.history = [];
+      renderHistory();
+      showAuth();
+      showToast('Logged out.', '');
+    }
+
+    /* ---------- Sync user data after each round ---------- */
+    async function syncUserData() {
+      if (!state.currentUser) return;
+      try {
+        await apiCall('/api/update', {
+          method: 'POST',
+          body: {
+            username: state.currentUser,
+            balance: state.balance,
+            totalWon: state.totalWon,
+            history: state.history
+          }
+        });
+        // Optionally refresh userData
+        const { user } = await apiCall(`/api/user/${state.currentUser}`);
+        state.userData = user;
+      } catch (err) {
+        console.warn('Sync failed:', err);
+      }
+    }
+
+    /* ---------- Game ---------- */
+    function renderBalance() {
+      el.balanceText.textContent = formatNumber(state.balance);
+    }
+
+    function renderPeriod() {
+      el.periodValue.textContent = state.period;
+    }
+
+    function renderTimer() {
+      const ratio = state.secondsLeft / ROUND_SECONDS;
+      const offset = TIMER_CIRCUMFERENCE * (1 - ratio);
+      el.timerProgress.style.strokeDasharray = TIMER_CIRCUMFERENCE;
+      el.timerProgress.style.strokeDashoffset = offset;
+      el.timerText.textContent = state.secondsLeft;
+      const isWarning = state.secondsLeft <= 5;
+      el.timerProgress.classList.toggle('warning', isWarning);
+      el.timerWrap.classList.toggle('pulse', isWarning);
+    }
+
+    function renderResult(number, colors, size) {
+      el.resultBadge.classList.remove('pop');
+      void el.resultBadge.offsetWidth;
+      const primaryColor = colors.includes('violet') && colors.length > 1 ?
+        colors.find(c => c !== 'violet') :
+        colors[0];
+      el.resultBadge.className = 'result-badge badge-' + (colors.length > 1 ? 'violet' : primaryColor);
+      el.resultBadge.textContent = number;
+      el.resultBadge.classList.add('pop');
+      el.resultNumber.textContent = number;
+      el.resultSize.textContent = size;
+    }
+
+    function renderHistory() {
+      el.historyBody.innerHTML = state.history
+        .map(row => {
+          const dots = row.colors.map(c => `<span class="dot ${c}"></span>`).join('');
+          return `
+            <tr>
+              <td>${row.period.slice(-6)}</td>
+              <td><b>${row.number}</b></td>
+              <td>${dots}</td>
+              <td><span class="tag">${row.size}</span></td>
+            </tr>`;
+        })
+        .join('');
+    }
+
+    /* ---------- Betting ---------- */
+    function selectChip(target) {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      target.classList.add('selected');
+      state.selectedAmount = parseInt(target.dataset.amount, 10);
+    }
+
+    function selectColor(target) {
+      const already = target.classList.contains('selected');
+      document.querySelectorAll('.color-card').forEach(c => c.classList.remove('selected'));
+      if (!already) {
+        target.classList.add('selected');
+        state.selectedColor = target.dataset.color;
+      } else {
+        state.selectedColor = null;
+      }
+    }
+
+    function selectNumber(target) {
+      const already = target.classList.contains('selected');
+      document.querySelectorAll('.num-btn').forEach(c => c.classList.remove('selected'));
+      if (!already) {
+        target.classList.add('selected');
+        state.selectedNumber = parseInt(target.dataset.num, 10);
+      } else {
+        state.selectedNumber = null;
+      }
+    }
+
+    function selectSize(target) {
+      const already = target.classList.contains('selected');
+      document.querySelectorAll('.bs-card').forEach(c => c.classList.remove('selected'));
+      if (!already) {
+        target.classList.add('selected');
+        state.selectedSize = target.dataset.size;
+      } else {
+        state.selectedSize = null;
+      }
+    }
+
+    function clearSelections() {
+      document.querySelectorAll('.color-card, .num-btn, .bs-card').forEach(c => c.classList.remove('selected'));
+      state.selectedColor = null;
+      state.selectedNumber = null;
+      state.selectedSize = null;
+    }
+
+    function placeBet() {
+      if (!state.currentUser) {
+        showToast('Please log in first.', 'error');
+        return;
+      }
+      const hasSelection = state.selectedColor || state.selectedNumber !== null || state.selectedSize;
+      if (!hasSelection) {
+        showToast('Pick a colour, number, or size first', 'error');
+        return;
+      }
+      if (state.balance < state.selectedAmount) {
+        showToast('Not enough balance', 'error');
+        return;
+      }
+
+      state.balance -= state.selectedAmount;
+      renderBalance();
+      // Immediately sync the deduction
+      syncUserData();
+
+      el.placeBetBtn.classList.remove('press-anim');
+      void el.placeBetBtn.offsetWidth;
+      el.placeBetBtn.classList.add('press-anim');
+
+      const parts = [];
+      if (state.selectedColor) parts.push(state.selectedColor);
+      if (state.selectedNumber !== null) parts.push('number ' + state.selectedNumber);
+      if (state.selectedSize) parts.push(state.selectedSize);
+
+      showToast(`Bet placed: ${formatNumber(state.selectedAmount)} on ${parts.join(', ')}`, 'success');
+
+      state.pendingBet = {
+        amount: state.selectedAmount,
+        color: state.selectedColor,
+        number: state.selectedNumber,
+        size: state.selectedSize
+      };
+
+      clearSelections();
+    }
+
+    /* ---------- Settlement ---------- */
+    function settleBet(number, colors, size) {
+      const bet = state.pendingBet;
+      if (!bet) return;
+      let won = false;
+      let payout = 0;
+
+      if (bet.color && colors.includes(bet.color)) {
+        won = true;
+        const multiplier = bet.color === 'violet' ? 4.5 : 2;
+        payout += bet.amount * multiplier;
+      }
+      if (bet.number !== null && bet.number === number) {
+        won = true;
+        payout += bet.amount * 9;
+      }
+      if (bet.size && bet.size === size.toLowerCase()) {
+        won = true;
+        payout += bet.amount * 2;
+      }
+
+      if (won) {
+        const winAmount = Math.round(payout);
+        state.balance += winAmount;
+        state.totalWon += winAmount;
+        renderBalance();
+        showToast(`🎉 You won ${formatNumber(winAmount)} coins!`, 'success');
+      } else {
+        showToast(`❌ Round lost. Better luck next time!`, 'error');
+      }
+      state.pendingBet = null;
+      // Sync after settlement
+      syncUserData();
+    }
+
+    /* ---------- Round ---------- */
+    function startRound() {
+      state.secondsLeft = ROUND_SECONDS;
+      renderTimer();
+      clearInterval(state.timerId);
+      state.timerId = setInterval(tick, 1000);
+    }
+
+    function tick() {
+      state.secondsLeft -= 1;
+      if (state.secondsLeft <= 0) {
+        resolveRound();
+        return;
+      }
+      renderTimer();
+    }
+
+    function resolveRound() {
+      const number = Math.floor(Math.random() * 10);
+      const colors = NUMBER_COLOR_MAP[number];
+      const size = getSize(number);
+
+      settleBet(number, colors, size);
+      renderResult(number, colors, size);
+
+      state.history.unshift({
+        period: state.period,
+        number,
+        colors,
+        size
+      });
+      if (state.history.length > MAX_HISTORY) {
+        state.history.length = MAX_HISTORY;
+      }
+      renderHistory();
+
+      state.period = nextPeriod(state.period);
+      renderPeriod();
+      startRound();
+    }
+
+    function initGame() {
+      state.period = generateInitialPeriod();
+      state.pendingBet = null;
+      renderPeriod();
+      renderTimer();
+      renderHistory();
+      renderBalance();
+      startRound();
+    }
+
+    /* ---------- Particles ---------- */
+    function spawnParticles(count) {
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (10 + Math.random() * 12) + 's';
+        p.style.animationDelay = (Math.random() * 12) + 's';
+        p.style.opacity = (0.3 + Math.random() * 0.4).toFixed(2);
+        el.bgLayer.appendChild(p);
+      }
+    }
+
+    /* ---------- Event binding ---------- */
+    function bindEvents() {
+      // Auth
+      el.loginBtn.addEventListener('click', handleLogin);
+      el.loginUsername.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+      el.loginPassword.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+      el.showRegisterLink.addEventListener('click', () => switchAuthForm(false));
+      el.registerBtn.addEventListener('click', handleRegister);
+      el.regUsername.addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+      el.regPassword.addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+      el.showLoginLink.addEventListener('click', () => switchAuthForm(true));
+
+      // Navigation
+      el.navItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const page = item.dataset.page;
+          if (page === 'home') {
+            navigateTo('home');
+            if (!state.timerId && state.currentUser) initGame();
+          } else if (page === 'profile') {
+            navigateTo('profile');
+          }
+        });
+      });
+      el.homeBrandBtn.addEventListener('click', () => navigateTo('home'));
+      el.walletBtn.addEventListener('click', () => navigateTo('profile'));
+
+      // Game  // Game
+      el.chipRow.addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (chip) selectChip(chip);
+      });
+      el.colorGrid.addEventListener('click', e => {
+        const card = e.target.closest('.color-card');
+        if (card) selectColor(card);
+      });
+      [el.numberRow1, el.numberRow2].forEach(row => {
+        row.addEventListener('click', e => {
+          const btn = e.target.closest('.num-btn');
+          if (btn) selectNumber(btn);
+        });
+      });
+      el.bigSmallGrid.addEventListener('click', e => {
+        const card = e.target.closest('.bs-card');
+        if (card) selectSize(card);
+      });
+      el.placeBetBtn.addEventListener('click', placeBet);
+
+      // Profile
+      el.inviteBtn.addEventListener('click', showReferral);
+      el.logoutBtn.addEventListener('click', logout);
+
+      // Referral
+      el.referralBackBtn.addEventListener('click', () => {
+        el.referralView.classList.remove('active');
+        navigateTo('profile');
+      });
+      el.copyReferralBtn.addEventListener('click', () => {
+        const code = el.referralCodeDisplay.textContent;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(() => {
+            showToast('📋 Referral code copied!', 'success');
+          }).catch(() => fallbackCopy(code));
+        } else {
+          fallbackCopy(code);
+        }
+      });
+
+      function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('📋 Referral code copied!', 'success');
+        } catch {
+          showToast('Could not copy. Please copy manually.', 'error');
+        }
+        document.body.removeChild(ta);
+      }
+
+      // Enter key for auth fields
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          const active = document.activeElement;
+          if (active && active.id === 'loginUsername') {
+            el.loginPassword.focus();
+            e.preventDefault();
+          } else if (active && active.id === 'loginPassword') {
+            handleLogin();
+            e.preventDefault();
+          } else if (active && active.id === 'regUsername') {
+            el.regPassword.focus();
+            e.preventDefault();
+          } else if (active && active.id === 'regPassword') {
+            handleRegister();
+            e.preventDefault();
+          }
+        }
+      });
+    }
+
+    /* ---------- Boot ---------- */
+    function boot() {
+      spawnParticles(18);
+      bindEvents();
+      showAuth();
+      switchAuthForm(true);
+    }
+
+    document.addEventListener('DOMContentLoaded', boot);
+  })();
+</script>
+      
 </body>
 </html>
